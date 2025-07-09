@@ -1,5 +1,6 @@
-import { describe, it, expect } from 'vitest'
-import { buildRedirectUrl, isPuzzleSolved } from '../lib/game-utils'
+import { describe, it } from 'node:test'
+import assert from 'node:assert/strict'
+import { buildRedirectUrl, isPuzzleSolved } from '../dist/game-utils.js'
 
 const mockConfig = {
   redirectUrl: 'https://example.com/complete',
@@ -7,18 +8,19 @@ const mockConfig = {
   includeTimeInRedirect: true,
   enableGamiPressTracking: false,
   gamiPressWebhookUrl: '',
-} as const
+}
 
 describe('game utils', () => {
   it('builds redirect url with params', () => {
     const url = buildRedirectUrl(mockConfig, 800, 300, 'ABCD', 'user1')
-    expect(url).toBe(
+    assert.equal(
+      url,
       'https://example.com/complete?completed=true&score=800&time=300&code=ABCD&user_id=user1',
     )
   })
 
   it('validates puzzle solution', () => {
-    expect(isPuzzleSolved('Code', 'code')).toBe(true)
-    expect(isPuzzleSolved('code', 'wrong')).toBe(false)
+    assert.ok(isPuzzleSolved('Code', 'code'))
+    assert.ok(!isPuzzleSolved('code', 'wrong'))
   })
 })

@@ -6,6 +6,7 @@ import Link from "next/link"
 import { Shield, CheckCircle, ExternalLink } from "lucide-react"
 import { gameConfig } from "@/lib/config"
 import { useEffect, useState } from "react"
+import { calculateScore, formatTime, buildRedirectUrl } from "@/lib/game-utils"
 
 interface GameWinProps {
   code: string
@@ -18,46 +19,17 @@ export default function GameWin({ code, timeRemaining, onPlayAgain, userId = nul
   const [score, setScore] = useState(0)
 
   useEffect(() => {
-    // Calculate score based on time remaining
-    const calculateScore = (time: number) => {
-      const maxScore = 1000
-      const timeBonus = Math.floor(time / 10)
-      return Math.min(maxScore, 500 + timeBonus)
-    }
-
     setScore(calculateScore(timeRemaining))
   }, [timeRemaining])
 
-  const formatTime = (seconds: number) => {
-    const minutes = Math.floor(seconds / 60)
-    const remainingSeconds = seconds % 60
-    return `${minutes} minutos e ${remainingSeconds} segundos`
-  }
-
   const handleFinalize = () => {
-    // Build the redirect URL with parameters
-    let redirectUrl = gameConfig.redirectUrl
-
-    // Add query parameters if configured
-    if (gameConfig.includeScoreInRedirect || gameConfig.includeTimeInRedirect) {
-      redirectUrl += (redirectUrl.includes("?") ? "&" : "?") + "completed=true"
-
-      if (gameConfig.includeScoreInRedirect) {
-        redirectUrl += `&score=${score}`
-      }
-
-      if (gameConfig.includeTimeInRedirect) {
-        redirectUrl += `&time=${timeRemaining}`
-      }
-
-      // Add the code
-      redirectUrl += `&code=${code}`
-
-      // Add user ID if available
-      if (userId) {
-        redirectUrl += `&user_id=${userId}`
-      }
-    }
+    const redirectUrl = buildRedirectUrl(
+      gameConfig,
+      score,
+      timeRemaining,
+      code,
+      userId,
+    )
 
     // Track completion with GamiPress if enabled
     if (gameConfig.enableGamiPressTracking && gameConfig.gamiPressWebhookUrl) {

@@ -1,37 +1,61 @@
-# Escape room game development
+# Escape Room - Vazamento de Dados
 
-*Automatically synced with your [v0.dev](https://v0.dev) deployments*
+Jogo educativo sobre segurança da informação desenvolvido para o Flamboyant Shopping.
 
-[![Deployed on Vercel](https://img.shields.io/badge/Deployed%20on-Vercel-black?style=for-the-badge&logo=vercel)](https://vercel.com/bodimfms-projects/v0-escape-room-game-development)
-[![Built with v0](https://img.shields.io/badge/Built%20with-v0.dev-black?style=for-the-badge)](https://v0.dev/chat/projects/AAvtNGveRY5)
+## Características
 
-## Overview
+- Jogo de escape room temático sobre vazamento de dados
+- 5 perguntas sobre segurança da informação
+- Timer de 10 minutos
+- Sistema de pontuação baseado no tempo
+- Botão "Finalizar" com redirecionamento configurável
+- Interface responsiva
 
-This repository will stay in sync with your deployed chats on [v0.dev](https://v0.dev).
-Any changes you make to your deployed app will be automatically pushed to this repository from [v0.dev](https://v0.dev).
+## Configuração
 
-## Deployment
+Edite o arquivo `lib/config.ts` para personalizar:
 
-Your project is live at:
+- URL de redirecionamento após conclusão
+- Textos do jogo
+- Tempo limite
+- Configurações visuais
 
-**[https://vercel.com/bodimfms-projects/v0-escape-room-game-development](https://vercel.com/bodimfms-projects/v0-escape-room-game-development)**
+## Estrutura de Arquivos
 
-## Build your app
+\`\`\`
+/app
+  /game - Página principal do jogo
+  /instructions - Como jogar
+  page.tsx - Página inicial
+/components
+  /game - Componentes do jogo
+  /ui - Componentes de interface
+/lib
+  config.ts - Configurações principais
+/public
+  /images - Imagens do jogo
+\`\`\`
 
-Continue building your app on:
+## Deploy
 
-**[https://v0.dev/chat/projects/AAvtNGveRY5](https://v0.dev/chat/projects/AAvtNGveRY5)**
+1. Faça build do projeto Next.js
+2. Hospede os arquivos em seu servidor
+3. Configure a URL de redirecionamento no config.ts
+4. Integre via iframe, shortcode ou HTML personalizado
 
-## How It Works
+## Parâmetros de URL
 
-1. Create and modify your project using [v0.dev](https://v0.dev)
-2. Deploy your chats from the v0 interface
-3. Changes are automatically pushed to this repository4. Vercel deploys the latest version from this repository
+O jogo passa os seguintes parâmetros na URL de redirecionamento:
 
-## Running tests
+- `completed=true` - Jogo concluído com sucesso
+- `score=XXX` - Pontuação do jogador
+- `time=XXX` - Tempo restante em segundos
+- `code=XXXXX` - Código de segurança encontrado
+- `user_id=XXX` - ID do usuário (se fornecido)
 
-Unit tests use Node.js's built-in test runner. To execute them locally run:
+## Tecnologias
 
-```bash
-npm test
-```
+- Next.js 14
+- TypeScript
+- Tailwind CSS
+- Shadcn/ui

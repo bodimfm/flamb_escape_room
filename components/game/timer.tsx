@@ -10,45 +10,34 @@ interface TimerProps {
 }
 
 export default function Timer({ initialTime, onTimeUp, setTimeRemaining }: TimerProps) {
-  const [timeRemaining, setTimeRemainingLocal] = useState(initialTime)
+  const [localTime, setLocalTime] = useState(initialTime)
 
   useEffect(() => {
-    const timer = setInterval(() => {
-      setTimeRemainingLocal((prev) => {
-        const newTime = prev - 1
-        if (setTimeRemaining) {
-          setTimeRemaining(newTime)
-        }
+    const id = setInterval(() => {
+      setLocalTime((prev) => Math.max(prev - 1, 0))
+    }, 1_000)
 
-        if (newTime <= 0) {
-          clearInterval(timer)
-          onTimeUp()
-          return 0
-        }
-        return newTime
-      })
-    }, 1000)
+    return () => clearInterval(id)
+  }, [])
 
-    return () => clearInterval(timer)
-  }, [onTimeUp, setTimeRemaining])
+  useEffect(() => {
+    if (setTimeRemaining) setTimeRemaining(localTime)
 
-  const formatTime = (seconds: number) => {
-    const minutes = Math.floor(seconds / 60)
-    const remainingSeconds = seconds % 60
-    return `${minutes.toString().padStart(2, "0")}:${remainingSeconds.toString().padStart(2, "0")}`
-  }
+    if (localTime === 0) onTimeUp()
+  }, [localTime, onTimeUp, setTimeRemaining])
 
-  // Determine color based on time remaining
-  const getTimerColor = () => {
-    if (timeRemaining < 60) return "text-red-500" // Less than 1 minute
-    if (timeRemaining < 180) return "text-yellow-500" // Less than 3 minutes
-    return "text-white"
+  const format = (s: number) => `${String(Math.floor(s / 60)).padStart(2, "0")}:${String(s % 60).padStart(2, "0")}`
+
+  const getTimerStyle = () => {
+    if (localTime < 60) return "text-red-400 animate-pulse font-bold"
+    if (localTime < 180) return "text-yellow-400 font-semibold"
+    return "text-white font-medium"
   }
 
   return (
-    <div className={`flex items-center ${getTimerColor()}`}>
-      <Clock className="h-4 w-4 mr-2" />
-      <span className="font-mono">{formatTime(timeRemaining)}</span>
+    <div className={`flex items-center ${getTimerStyle()} game-text-shadow`}>
+      <Clock className="h-5 w-5 mr-2" />
+      <span className="font-mono text-lg">{format(localTime)}</span>
     </div>
   )
 }

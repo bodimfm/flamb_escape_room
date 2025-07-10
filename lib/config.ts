@@ -1,23 +1,22 @@
+// Arquivo de configuração principal do jogo
+// Edite este arquivo para personalizar o comportamento do jogo
+
 // Configuration file for the escape room game
 
 export const gameConfig = {
   // URL for redirection after game completion
-  redirectUrl: "https://seusite.com/conclusao-do-jogo/",
+  redirectUrl: "https://seusite.com/obrigado/",
 
   // Game information
-  gameTitle: "Escape Room - Vazamento de Dados",
+  gameTitle: "Desafio de Segurança - Vazamento de Dados",
   companyName: "Flamboyant Shopping",
 
-  // Time settings
-  timeLimit: 600, // in seconds (10 minutes)
-
   // Custom text
-  finishButtonText: "Finalizar",
+  finishButtonText: "RESGATE SEUS PONTOS!",
   successMessage: "Parabéns! Você completou o desafio com sucesso!",
 
   // Parameters to pass in the redirect URL
-  includeScoreInRedirect: true,
-  includeTimeInRedirect: true,
+  includePointsInRedirect: true,
 
   // GamiPress integration
   enableGamiPressTracking: false,

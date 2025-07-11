@@ -8,9 +8,23 @@ import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog"
-import { AlertTriangle, Star, ExternalLink, Volume2, VolumeX, Music, CheckCircle2, XCircle, Timer } from "lucide-react"
+import {
+  AlertTriangle,
+  Star,
+  ExternalLink,
+  Volume2,
+  VolumeX,
+  Music,
+  CheckCircle2,
+  XCircle,
+  Timer,
+  Award,
+  Medal,
+  Trophy,
+  Crown,
+} from "lucide-react"
 import GameOver from "@/components/game/game-over"
-import { gameConfig } from "@/lib/config"
+import { gameConfig, getAchievementByPerformance } from "@/lib/config"
 
 // Define the questions for the game with more options and shorter time limits
 const questions = [
@@ -134,6 +148,7 @@ export default function Game() {
   const [showIntro, setShowIntro] = useState(true)
   const [currentQuestion, setCurrentQuestion] = useState(0)
   const [totalPoints, setTotalPoints] = useState(0)
+  const [correctAnswers, setCorrectAnswers] = useState(0)
   const [showFeedback, setShowFeedback] = useState(false)
   const [isCorrect, setIsCorrect] = useState(false)
   const [feedbackText, setFeedbackText] = useState("")
@@ -406,6 +421,7 @@ export default function Game() {
     if (isCorrect) {
       playSound(correctSoundRef)
       setTotalPoints(totalPoints + points)
+      setCorrectAnswers(correctAnswers + 1)
       setPointsEarned(points)
       setIsCorrect(true)
       setFeedbackText(questions[currentQuestion].explanation)
@@ -442,6 +458,9 @@ export default function Game() {
   }
 
   const handleRedeemPoints = () => {
+    // Get achievement based on performance
+    const achievement = getAchievementByPerformance(correctAnswers, questions.length)
+
     // Build the redirect URL with points parameter
     let redirectUrl = gameConfig.redirectUrl
 
@@ -450,6 +469,11 @@ export default function Game() {
     redirectUrl += `&points=${totalPoints}`
     redirectUrl += `&questions_answered=${answeredQuestions}`
     redirectUrl += `&total_questions=${questions.length}`
+    redirectUrl += `&correct_answers=${correctAnswers}`
+    redirectUrl += `&percentage=${achievement.percentage}`
+    redirectUrl += `&achievement_id=${achievement.id}`
+    redirectUrl += `&achievement_name=${encodeURIComponent(achievement.name)}`
+    redirectUrl += `&gamipress_points=${achievement.points}`
 
     // Add user ID if available
     if (userId) {
@@ -458,23 +482,35 @@ export default function Game() {
 
     // Track completion with GamiPress if enabled
     if (gameConfig.enableGamiPressTracking && gameConfig.gamiPressWebhookUrl) {
+      const gamiPressData = {
+        event: "escape_room_completed",
+        user_id: userId || "anonymous",
+        points: totalPoints,
+        questions_answered: answeredQuestions,
+        total_questions: questions.length,
+        correct_answers: correctAnswers,
+        percentage: achievement.percentage,
+        achievement_id: achievement.id,
+        achievement_name: achievement.name,
+        gamipress_points: achievement.points,
+        timestamp: new Date().toISOString(),
+      }
+
       fetch(gameConfig.gamiPressWebhookUrl, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({
-          event: "escape_room_completed",
-          user_id: userId || "anonymous",
-          points: totalPoints,
-          questions_answered: answeredQuestions,
-          total_questions: questions.length,
-        }),
+        body: JSON.stringify(gamiPressData),
       })
-        .then(() => {
+        .then((response) => response.json())
+        .then((data) => {
+          console.log("GamiPress tracking successful:", data)
           window.location.href = redirectUrl
         })
-        .catch(() => {
+        .catch((error) => {
+          console.error("GamiPress tracking failed:", error)
+          // Redirect even if tracking fails
           window.location.href = redirectUrl
         })
     } else {
@@ -510,11 +546,21 @@ export default function Game() {
     return ((currentQuestion + 1) / questions.length) * 100
   }
 
+  // Get achievement icon based on performance
+  const getAchievementIcon = (achievement: any) => {
+    if (achievement.percentage >= 76) return <Crown className="h-8 w-8" style={{ color: achievement.color }} />
+    if (achievement.percentage >= 51) return <Trophy className="h-8 w-8" style={{ color: achievement.color }} />
+    if (achievement.percentage >= 26) return <Medal className="h-8 w-8" style={{ color: achievement.color }} />
+    return <Award className="h-8 w-8" style={{ color: achievement.color }} />
+  }
+
   if (isGameOver) {
     return <GameOver onTryAgain={handleTryAgain} />
   }
 
   if (isGameComplete) {
+    const achievement = getAchievementByPerformance(correctAnswers, questions.length)
+
     return (
       <div className="fixed inset-0 bg-black/95 flex flex-col items-center justify-center z-50 p-4">
         <div className="max-w-lg w-full game-card rounded-2xl p-8 text-center shadow-2xl">
@@ -527,27 +573,56 @@ export default function Game() {
                 height={120}
                 className="drop-shadow-2xl"
               />
-              <div className="absolute -top-3 -right-3 bg-yellow-600 rounded-full p-2 shadow-lg">
-                <Star className="h-8 w-8 text-white" />
+              <div
+                className="absolute -top-3 -right-3 rounded-full p-2 shadow-lg"
+                style={{ backgroundColor: achievement.color }}
+              >
+                {getAchievementIcon(achievement)}
               </div>
-              <div className="absolute inset-0 bg-yellow-500/20 rounded-full blur-2xl -z-10"></div>
+              <div
+                className="absolute inset-0 rounded-full blur-2xl -z-10"
+                style={{ backgroundColor: `${achievement.color}33` }}
+              ></div>
             </div>
           </div>
 
-          <h2 className="text-4xl font-bold text-yellow-400 mb-6 game-text-shadow">🎉 Desafio Concluído!</h2>
+          <h2 className="text-4xl font-bold mb-6 game-text-shadow" style={{ color: achievement.color }}>
+            🎉 {achievement.name}!
+          </h2>
 
           <p className="text-white mb-8 text-lg leading-relaxed">
-            <strong className="text-yellow-300">Parabéns!</strong> Você completou o desafio de segurança da informação
-            do {gameConfig.companyName}. Agora é hora de resgatar seus pontos!
+            <strong style={{ color: achievement.color }}>Parabéns!</strong> Você completou o desafio de segurança da
+            informação do {gameConfig.companyName} com{" "}
+            <strong className="text-yellow-300">{achievement.percentage}% de acerto</strong>!
           </p>
 
-          <div className="p-6 bg-yellow-900/40 rounded-xl border-2 border-yellow-600 mb-8">
-            <h3 className="font-bold text-yellow-200 mb-4 text-2xl flex items-center justify-center">
-              <Star className="mr-3 h-8 w-8" />
-              Sua Pontuação
-            </h3>
-            <div className="text-6xl font-bold text-yellow-300 mb-4">{totalPoints}</div>
-            <div className="text-lg text-yellow-200">de {questions.length * 25} pontos possíveis</div>
+          {/* Achievement Badge */}
+          <div
+            className="p-6 rounded-xl border-2 mb-8"
+            style={{
+              backgroundColor: `${achievement.color}20`,
+              borderColor: achievement.color,
+            }}
+          >
+            <div className="flex items-center justify-center mb-4">
+              {getAchievementIcon(achievement)}
+              <h3 className="font-bold text-2xl ml-3" style={{ color: achievement.color }}>
+                {achievement.name}
+              </h3>
+            </div>
+            <p className="text-gray-200 text-lg mb-4">{achievement.description}</p>
+            <div className="flex justify-center items-center space-x-4">
+              <div className="text-center">
+                <div className="text-3xl font-bold" style={{ color: achievement.color }}>
+                  {achievement.points}
+                </div>
+                <div className="text-sm text-gray-300">Pontos GamiPress</div>
+              </div>
+              <div className="text-center">
+                <div className="text-3xl font-bold text-yellow-300">{totalPoints}</div>
+                <div className="text-sm text-gray-300">Pontos do Jogo</div>
+              </div>
+            </div>
           </div>
 
           <div className="p-6 bg-blue-900/40 rounded-xl border-2 border-blue-600 mb-8 text-left">
@@ -562,17 +637,17 @@ export default function Game() {
               </li>
               <li className="flex items-center">
                 <span className="text-green-400 mr-3">✅</span>
-                Respostas corretas: <strong className="text-green-300 ml-2">{totalPoints / 25}</strong>
+                Respostas corretas: <strong className="text-green-300 ml-2">{correctAnswers}</strong>
               </li>
               <li className="flex items-center">
                 <span className="text-yellow-400 mr-3">🏆</span>
-                Pontuação final: <strong className="text-yellow-300 ml-2">{totalPoints} pontos</strong>
+                Taxa de acerto: <strong className="text-yellow-300 ml-2">{achievement.percentage}%</strong>
               </li>
               <li className="flex items-center">
-                <span className="text-purple-400 mr-3">📈</span>
-                Taxa de acerto:{" "}
-                <strong className="text-purple-300 ml-2">
-                  {Math.round((totalPoints / (questions.length * 25)) * 100)}%
+                <span className="text-purple-400 mr-3">🎯</span>
+                Nível alcançado:{" "}
+                <strong style={{ color: achievement.color }} className="ml-2">
+                  {achievement.name}
                 </strong>
               </li>
             </ul>
@@ -580,10 +655,15 @@ export default function Game() {
 
           <div className="flex flex-col gap-4">
             <Button
-              className="w-full bg-yellow-600 hover:bg-yellow-700 text-white flex items-center justify-center text-xl py-6 game-button border-2 border-yellow-500 hover:border-yellow-400"
+              className="w-full text-white flex items-center justify-center text-xl py-6 game-button border-2 hover:scale-105 transition-all duration-300"
+              style={{
+                backgroundColor: achievement.color,
+                borderColor: achievement.color,
+                boxShadow: `0 4px 20px ${achievement.color}40`,
+              }}
               onClick={handleRedeemPoints}
             >
-              🎯 RESGATE SEUS PONTOS! <ExternalLink className="ml-2 h-5 w-5" />
+              🎯 {gameConfig.finishButtonText} <ExternalLink className="ml-2 h-5 w-5" />
             </Button>
 
             <div className="flex flex-col sm:flex-row justify-center gap-4">
@@ -660,6 +740,49 @@ export default function Game() {
                 limite para ser respondida e vale pontos pela resposta correta.
               </p>
 
+              {/* Achievement Levels Preview */}
+              <div className="p-6 bg-gradient-to-r from-purple-900/40 to-blue-900/40 rounded-xl border-2 border-purple-600 mt-6">
+                <h3 className="font-bold text-purple-200 mb-4 text-xl game-text-shadow text-center">
+                  🏆 Níveis de Conquista:
+                </h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {Object.values(gameConfig.achievementIds).map((achievement, index) => (
+                    <div
+                      key={index}
+                      className="flex items-center p-3 rounded-lg border"
+                      style={{
+                        backgroundColor: `${achievement.color}20`,
+                        borderColor: achievement.color,
+                      }}
+                    >
+                      <div className="mr-3">
+                        {achievement.id.includes("platinum") && (
+                          <Crown className="h-6 w-6" style={{ color: achievement.color }} />
+                        )}
+                        {achievement.id.includes("gold") && (
+                          <Trophy className="h-6 w-6" style={{ color: achievement.color }} />
+                        )}
+                        {achievement.id.includes("silver") && (
+                          <Medal className="h-6 w-6" style={{ color: achievement.color }} />
+                        )}
+                        {achievement.id.includes("bronze") && (
+                          <Award className="h-6 w-6" style={{ color: achievement.color }} />
+                        )}
+                      </div>
+                      <div>
+                        <h4 className="font-bold text-sm" style={{ color: achievement.color }}>
+                          {achievement.name}
+                        </h4>
+                        <p className="text-xs text-gray-300">
+                          {achievement.minPercentage}%-{achievement.maxPercentage}% de acerto
+                        </p>
+                        <p className="text-xs text-yellow-300">{achievement.points} pontos GamiPress</p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
               <div className="p-6 bg-yellow-900/40 rounded-xl border-2 border-yellow-600 mt-6">
                 <h3 className="font-bold text-yellow-200 mb-4 text-xl game-text-shadow text-center">
                   🎯 Como Funciona:
@@ -689,7 +812,7 @@ export default function Game() {
                     </li>
                     <li className="flex items-center">
                       <span className="text-yellow-400 mr-3">🎁</span>
-                      Resgate seus pontos ao final do desafio
+                      Conquistas baseadas na sua performance
                     </li>
                   </ul>
                 </div>

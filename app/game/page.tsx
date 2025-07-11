@@ -131,7 +131,6 @@ const questions = [
 
 export default function Game() {
   // Add new state for music theme selection
-  const [musicTheme, setMusicTheme] = useState<"corporate" | "cyber" | "minimal">("cyber")
   const [showIntro, setShowIntro] = useState(true)
   const [currentQuestion, setCurrentQuestion] = useState(0)
   const [totalPoints, setTotalPoints] = useState(0)
@@ -256,38 +255,6 @@ export default function Game() {
     const oscillators: OscillatorNode[] = []
     const gainNodes: GainNode[] = []
 
-    switch (musicTheme) {
-      case "corporate":
-        createCorporateTheme(audioContext, oscillators, gainNodes)
-        break
-      case "cyber":
-        createCyberTheme(audioContext, oscillators, gainNodes)
-        break
-      case "minimal":
-        createMinimalTheme(audioContext, oscillators, gainNodes)
-        break
-    }
-
-    // Start all oscillators
-    oscillators.forEach((osc) => osc.start(audioContext.currentTime))
-
-    // Store reference for cleanup
-    backgroundMusicRef.current = {
-      oscillators,
-      gainNodes,
-      stop: () => {
-        oscillators.forEach((osc) => {
-          try {
-            osc.stop()
-          } catch (e) {
-            // Oscillator might already be stopped
-          }
-        })
-      },
-    }
-  }
-
-  const createCorporateTheme = (audioContext: AudioContext, oscillators: OscillatorNode[], gainNodes: GainNode[]) => {
     // Professional, clean corporate ambience
     // Based on major chord progressions and warm tones
 
@@ -329,119 +296,29 @@ export default function Game() {
 
     oscillators.push(rootOsc, fifthOsc, octaveOsc, lfo)
     gainNodes.push(rootGain, fifthGain, octaveGain, lfoGain)
-  }
 
-  const createCyberTheme = (audioContext: AudioContext, oscillators: OscillatorNode[], gainNodes: GainNode[]) => {
-    // Dark, futuristic cyber ambience (original theme)
+    // Start all oscillators
+    oscillators.forEach((osc) => osc.start(audioContext.currentTime))
 
-    // Base drone (very low volume)
-    const baseOsc = audioContext.createOscillator()
-    const baseGain = audioContext.createGain()
-    baseOsc.connect(baseGain)
-    baseGain.connect(audioContext.destination)
-    baseOsc.frequency.setValueAtTime(55, audioContext.currentTime) // Low A
-    baseOsc.type = "sine"
-    baseGain.gain.setValueAtTime(0.02, audioContext.currentTime)
-
-    // Harmonic layer
-    const harmOsc = audioContext.createOscillator()
-    const harmGain = audioContext.createGain()
-    harmOsc.connect(harmGain)
-    harmGain.connect(audioContext.destination)
-    harmOsc.frequency.setValueAtTime(110, audioContext.currentTime) // A2
-    harmOsc.type = "sine"
-    harmGain.gain.setValueAtTime(0.015, audioContext.currentTime)
-
-    // Subtle tension layer (slightly detuned)
-    const tensionOsc = audioContext.createOscillator()
-    const tensionGain = audioContext.createGain()
-    tensionOsc.connect(tensionGain)
-    tensionGain.connect(audioContext.destination)
-    tensionOsc.frequency.setValueAtTime(164.8, audioContext.currentTime) // E3 slightly detuned
-    tensionOsc.type = "triangle"
-    tensionGain.gain.setValueAtTime(0.008, audioContext.currentTime)
-
-    // Cyber pulse (very subtle)
-    const pulseOsc = audioContext.createOscillator()
-    const pulseGain = audioContext.createGain()
-    pulseOsc.connect(pulseGain)
-    pulseGain.connect(audioContext.destination)
-    pulseOsc.frequency.setValueAtTime(220, audioContext.currentTime) // A3
-    pulseOsc.type = "square"
-    pulseGain.gain.setValueAtTime(0.005, audioContext.currentTime)
-
-    // Add subtle LFO for breathing effect
-    const lfo = audioContext.createOscillator()
-    const lfoGain = audioContext.createGain()
-    lfo.connect(lfoGain)
-    lfoGain.connect(baseGain.gain)
-    lfo.frequency.setValueAtTime(0.1, audioContext.currentTime)
-    lfo.type = "sine"
-    lfoGain.gain.setValueAtTime(0.005, audioContext.currentTime)
-
-    oscillators.push(baseOsc, harmOsc, tensionOsc, pulseOsc, lfo)
-    gainNodes.push(baseGain, harmGain, tensionGain, pulseGain, lfoGain)
-  }
-
-  const createMinimalTheme = (audioContext: AudioContext, oscillators: OscillatorNode[], gainNodes: GainNode[]) => {
-    // Clean, minimal ambient drone
-
-    // Single pure tone
-    const pureOsc = audioContext.createOscillator()
-    const pureGain = audioContext.createGain()
-    pureOsc.connect(pureGain)
-    pureGain.connect(audioContext.destination)
-    pureOsc.frequency.setValueAtTime(220, audioContext.currentTime) // A3
-    pureOsc.type = "sine"
-    pureGain.gain.setValueAtTime(0.015, audioContext.currentTime)
-
-    // Subtle harmonic
-    const harmOsc = audioContext.createOscillator()
-    const harmGain = audioContext.createGain()
-    harmOsc.connect(harmGain)
-    harmGain.connect(audioContext.destination)
-    harmOsc.frequency.setValueAtTime(440, audioContext.currentTime) // A4
-    harmOsc.type = "sine"
-    harmGain.gain.setValueAtTime(0.008, audioContext.currentTime)
-
-    // Very slow LFO for gentle variation
-    const lfo = audioContext.createOscillator()
-    const lfoGain = audioContext.createGain()
-    lfo.connect(lfoGain)
-    lfoGain.connect(pureGain.gain)
-    lfo.frequency.setValueAtTime(0.05, audioContext.currentTime) // Even slower
-    lfo.type = "sine"
-    lfoGain.gain.setValueAtTime(0.003, audioContext.currentTime)
-
-    oscillators.push(pureOsc, harmOsc, lfo)
-    gainNodes.push(pureGain, harmGain, lfoGain)
+    // Store reference for cleanup
+    backgroundMusicRef.current = {
+      oscillators,
+      gainNodes,
+      stop: () => {
+        oscillators.forEach((osc) => {
+          try {
+            osc.stop()
+          } catch (e) {
+            // Oscillator might already be stopped
+          }
+        })
+      },
+    }
   }
 
   // Add function to cycle through themes
-  const cycleMusicTheme = () => {
-    const themes: Array<"corporate" | "cyber" | "minimal"> = ["corporate", "cyber", "minimal"]
-    const currentIndex = themes.indexOf(musicTheme)
-    const nextIndex = (currentIndex + 1) % themes.length
-    setMusicTheme(themes[nextIndex])
-
-    // Restart music with new theme if currently playing
-    if (musicEnabled && !showIntro && backgroundMusicRef.current) {
-      stopBackgroundMusic()
-      setTimeout(() => {
-        createBackgroundMusic()
-      }, 100)
-    }
-  }
 
   // Update the music theme when it changes
-  useEffect(() => {
-    if (musicEnabled && !showIntro && backgroundMusicRef.current) {
-      stopBackgroundMusic()
-      setTimeout(() => {
-        createBackgroundMusic()
-      }, 100)
-    }
-  }, [musicTheme])
 
   // Start background music when game starts
   const startBackgroundMusic = () => {
@@ -744,15 +621,12 @@ export default function Game() {
           <div className="flex items-center space-x-2">
             <Button
               variant="outline"
-              size="sm"
-              onClick={cycleMusicTheme}
-              className="bg-red-600/20 border-red-600 text-white hover:bg-red-600/40 px-3 py-2"
-              title={`Tema musical: ${musicTheme === "corporate" ? "Corporativo" : musicTheme === "cyber" ? "Cyber" : "Minimal"}`}
+              size="icon"
+              onClick={toggleMusic}
+              className="bg-red-600/20 border-red-600 text-white hover:bg-red-600/40"
+              title={musicEnabled ? "Desativar música" : "Ativar música"}
             >
-              <Music className={`h-4 w-4 mr-2 ${musicEnabled ? "text-green-400" : "text-gray-400"}`} />
-              <span className="text-xs font-medium hidden sm:inline">
-                {musicTheme === "corporate" ? "Corp" : musicTheme === "cyber" ? "Cyber" : "Min"}
-              </span>
+              <Music className={`h-4 w-4 ${musicEnabled ? "text-green-400" : "text-gray-400"}`} />
             </Button>
             <Button
               variant="outline"
@@ -807,7 +681,7 @@ export default function Game() {
                   </ul>
                   <ul className="space-y-3 text-white font-medium">
                     <li className="flex items-center">
-                      <span className="text-yellow-400 mr-3">🎵</span>3 temas musicais: Corporativo, Cyber e Minimal
+                      <span className="text-yellow-400 mr-3">🎵</span>Música ambiente corporativa para concentração
                     </li>
                     <li className="flex items-center">
                       <span className="text-yellow-400 mr-3">🔊</span>

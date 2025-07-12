@@ -1,7 +1,6 @@
 "use client"
 
 import type React from "react"
-
 import { useState, useEffect, useRef } from "react"
 import Image from "next/image"
 import Link from "next/link"
@@ -18,13 +17,61 @@ import {
   CheckCircle2,
   XCircle,
   Timer,
-  Award,
-  Medal,
-  Trophy,
   Crown,
+  Trophy,
+  Medal,
+  Award,
 } from "lucide-react"
 import GameOver from "@/components/game/game-over"
-import { gameConfig, getAchievementByPerformance } from "@/lib/config"
+import { gameConfig } from "@/lib/config"
+
+// Updated achievement levels with Flamboyant Shopping brand colors and images
+const achievementLevels = {
+  ciber_aprendiz_badge: {
+    id: "ciber_aprendiz_badge",
+    name: "Ciber Aprendiz",
+    description: "Demonstra interesse inicial em segurança da informação",
+    minPercentage: 0,
+    maxPercentage: 25,
+    points: 50,
+    color: "#DC2626", // Flamboyant red
+    image: "/images/achievements/ciber-aprendiz.png",
+    url: "https://v0-escape-room-game-development.vercel.app/ciber-aprendiz",
+  },
+  ciber_vigilante_badge: {
+    id: "ciber_vigilante_badge",
+    name: "Ciber Vigilante",
+    description: "Conhecimento básico em práticas de segurança",
+    minPercentage: 26,
+    maxPercentage: 50,
+    points: 100,
+    color: "#B91C1C", // Darker Flamboyant red
+    image: "/images/achievements/ciber-vigilante.png",
+    url: "https://v0-escape-room-game-development.vercel.app/ciber-vigilante",
+  },
+  ciber_guardiao_badge: {
+    id: "ciber_guardiao_badge",
+    name: "Ciber Guardião",
+    description: "Excelente domínio em segurança digital",
+    minPercentage: 51,
+    maxPercentage: 75,
+    points: 150,
+    color: "#991B1B", // Deep Flamboyant red
+    image: "/images/achievements/ciber-guardiao.png",
+    url: "https://v0-escape-room-game-development.vercel.app/ciber-guardiao",
+  },
+  ciber_embaixador_flamboyant_badge: {
+    id: "ciber_embaixador_flamboyant_badge",
+    name: "Ciber Embaixador Flamboyant",
+    description: "Domínio excepcional em segurança da informação",
+    minPercentage: 76,
+    maxPercentage: 100,
+    points: 200,
+    color: "#7F1D1D", // Darkest Flamboyant red
+    image: "/images/achievements/ciber-embaixador.png",
+    url: "https://v0-escape-room-game-development.vercel.app/ciber-embaixador-flamboyant",
+  },
+}
 
 // Define the questions for the game with more options and shorter time limits
 const questions = [
@@ -143,6 +190,20 @@ const questions = [
   },
 ]
 
+const getAchievementByPerformance = (correctAnswers: number, totalQuestions: number) => {
+  const percentage = Math.round((correctAnswers / totalQuestions) * 100)
+
+  if (percentage >= achievementLevels.ciber_embaixador_flamboyant_badge.minPercentage) {
+    return { ...achievementLevels.ciber_embaixador_flamboyant_badge, percentage }
+  } else if (percentage >= achievementLevels.ciber_guardiao_badge.minPercentage) {
+    return { ...achievementLevels.ciber_guardiao_badge, percentage }
+  } else if (percentage >= achievementLevels.ciber_vigilante_badge.minPercentage) {
+    return { ...achievementLevels.ciber_vigilante_badge, percentage }
+  } else {
+    return { ...achievementLevels.ciber_aprendiz_badge, percentage }
+  }
+}
+
 export default function Game() {
   // Add new state for music theme selection
   const [showIntro, setShowIntro] = useState(true)
@@ -254,8 +315,6 @@ export default function Game() {
     }
   }, [soundEnabled])
 
-  // Replace the createBackgroundMusic function with theme-based versions:
-
   // Background music creation function with different themes
   const createBackgroundMusic = () => {
     if (!audioContextRef.current || !musicEnabled) return
@@ -330,10 +389,6 @@ export default function Game() {
       },
     }
   }
-
-  // Add function to cycle through themes
-
-  // Update the music theme when it changes
 
   // Start background music when game starts
   const startBackgroundMusic = () => {
@@ -458,11 +513,10 @@ export default function Game() {
   }
 
   const handleRedeemPoints = () => {
-    // Get achievement based on performance
     const achievement = getAchievementByPerformance(correctAnswers, questions.length)
 
-    // Build the redirect URL with points parameter
-    let redirectUrl = gameConfig.redirectUrl
+    // Use the achievement's specific URL
+    let redirectUrl = achievement.url
 
     // Add query parameters
     redirectUrl += (redirectUrl.includes("?") ? "&" : "?") + "completed=true"
@@ -475,7 +529,6 @@ export default function Game() {
     redirectUrl += `&achievement_name=${encodeURIComponent(achievement.name)}`
     redirectUrl += `&gamipress_points=${achievement.points}`
 
-    // Add user ID if available
     if (userId) {
       redirectUrl += `&user_id=${userId}`
     }
@@ -563,7 +616,7 @@ export default function Game() {
 
     return (
       <div className="fixed inset-0 bg-black/95 flex flex-col items-center justify-center z-50 p-4">
-        <div className="max-w-lg w-full game-card rounded-2xl p-8 text-center shadow-2xl">
+        <div className="max-w-lg w-full bg-white rounded-2xl p-8 text-center shadow-2xl border-4 border-red-600">
           <div className="flex justify-center mb-8">
             <div className="relative">
               <Image
@@ -573,11 +626,14 @@ export default function Game() {
                 height={120}
                 className="drop-shadow-2xl"
               />
-              <div
-                className="absolute -top-3 -right-3 rounded-full p-2 shadow-lg"
-                style={{ backgroundColor: achievement.color }}
-              >
-                {getAchievementIcon(achievement)}
+              <div className="absolute -top-6 -right-6 w-20 h-20 rounded-full shadow-2xl overflow-hidden border-4 border-white">
+                <Image
+                  src={achievement.image || "/placeholder.svg"}
+                  alt={achievement.name}
+                  width={80}
+                  height={80}
+                  className="w-full h-full object-cover"
+                />
               </div>
               <div
                 className="absolute inset-0 rounded-full blur-2xl -z-10"
@@ -586,95 +642,83 @@ export default function Game() {
             </div>
           </div>
 
-          <h2 className="text-4xl font-bold mb-6 game-text-shadow" style={{ color: achievement.color }}>
-            🎉 {achievement.name}!
-          </h2>
+          <h2 className="text-4xl font-bold mb-6 text-red-600">🎉 {achievement.name}!</h2>
 
-          <p className="text-white mb-8 text-lg leading-relaxed">
-            <strong style={{ color: achievement.color }}>Parabéns!</strong> Você completou o desafio de segurança da
-            informação do {gameConfig.companyName} com{" "}
-            <strong className="text-yellow-300">{achievement.percentage}% de acerto</strong>!
+          <p className="text-gray-800 mb-8 text-lg leading-relaxed">
+            <strong className="text-red-600">Parabéns!</strong> Você completou o desafio de segurança da informação do{" "}
+            {gameConfig.companyName} com <strong className="text-red-600">{achievement.percentage}% de acerto</strong>!
           </p>
 
           {/* Achievement Badge */}
-          <div
-            className="p-6 rounded-xl border-2 mb-8"
-            style={{
-              backgroundColor: `${achievement.color}20`,
-              borderColor: achievement.color,
-            }}
-          >
+          <div className="p-6 rounded-xl border-2 border-red-200 mb-8 bg-red-50">
             <div className="flex items-center justify-center mb-4">
-              {getAchievementIcon(achievement)}
-              <h3 className="font-bold text-2xl ml-3" style={{ color: achievement.color }}>
-                {achievement.name}
-              </h3>
-            </div>
-            <p className="text-gray-200 text-lg mb-4">{achievement.description}</p>
-            <div className="flex justify-center items-center space-x-4">
-              <div className="text-center">
-                <div className="text-3xl font-bold" style={{ color: achievement.color }}>
-                  {achievement.points}
-                </div>
-                <div className="text-sm text-gray-300">Pontos GamiPress</div>
+              <div className="w-16 h-16 rounded-full overflow-hidden mr-4 border-2 border-red-300">
+                <Image
+                  src={achievement.image || "/placeholder.svg"}
+                  alt={achievement.name}
+                  width={64}
+                  height={64}
+                  className="w-full h-full object-cover"
+                />
               </div>
+              <h3 className="font-bold text-2xl text-red-700">{achievement.name}</h3>
+            </div>
+            <p className="text-gray-700 text-lg mb-4">{achievement.description}</p>
+            <div className="flex justify-center items-center space-x-8">
               <div className="text-center">
-                <div className="text-3xl font-bold text-yellow-300">{totalPoints}</div>
-                <div className="text-sm text-gray-300">Pontos do Jogo</div>
+                <div className="text-3xl font-bold text-red-600">{achievement.points}</div>
+                <div className="text-sm text-gray-600">Pontos GamiPress</div>
+              </div>
+
+              <div className="text-center">
+                <div className="text-3xl font-bold text-yellow-600">{totalPoints}</div>
+                <div className="text-sm text-gray-600">Pontos do Jogo</div>
               </div>
             </div>
           </div>
 
-          <div className="p-6 bg-blue-900/40 rounded-xl border-2 border-blue-600 mb-8 text-left">
-            <h3 className="font-bold text-blue-300 mb-4 flex items-center text-xl">📊 Relatório de Performance:</h3>
-            <ul className="space-y-3 text-gray-100 text-lg">
+          <div className="p-6 bg-blue-50 rounded-xl border-2 border-blue-200 mb-8 text-left">
+            <h3 className="font-bold text-blue-700 mb-4 flex items-center text-xl">📊 Relatório de Performance:</h3>
+            <ul className="space-y-3 text-gray-700 text-lg">
               <li className="flex items-center">
-                <span className="text-blue-400 mr-3">📝</span>
+                <span className="text-blue-600 mr-3">📝</span>
                 Perguntas respondidas:{" "}
-                <strong className="text-blue-300 ml-2">
+                <strong className="text-blue-700 ml-2">
                   {answeredQuestions}/{questions.length}
                 </strong>
               </li>
               <li className="flex items-center">
-                <span className="text-green-400 mr-3">✅</span>
-                Respostas corretas: <strong className="text-green-300 ml-2">{correctAnswers}</strong>
+                <span className="text-green-600 mr-3">✅</span>
+                Respostas corretas: <strong className="text-green-700 ml-2">{correctAnswers}</strong>
               </li>
               <li className="flex items-center">
-                <span className="text-yellow-400 mr-3">🏆</span>
-                Taxa de acerto: <strong className="text-yellow-300 ml-2">{achievement.percentage}%</strong>
+                <span className="text-yellow-600 mr-3">🏆</span>
+                Taxa de acerto: <strong className="text-yellow-700 ml-2">{achievement.percentage}%</strong>
               </li>
               <li className="flex items-center">
-                <span className="text-purple-400 mr-3">🎯</span>
-                Nível alcançado:{" "}
-                <strong style={{ color: achievement.color }} className="ml-2">
-                  {achievement.name}
-                </strong>
+                <span className="text-red-600 mr-3">🎯</span>
+                Nível alcançado: <strong className="text-red-700 ml-2">{achievement.name}</strong>
               </li>
             </ul>
           </div>
 
           <div className="flex flex-col gap-4">
             <Button
-              className="w-full text-white flex items-center justify-center text-xl py-6 game-button border-2 hover:scale-105 transition-all duration-300"
-              style={{
-                backgroundColor: achievement.color,
-                borderColor: achievement.color,
-                boxShadow: `0 4px 20px ${achievement.color}40`,
-              }}
+              className="w-full text-white flex items-center justify-center text-xl py-6 font-bold border-2 hover:scale-105 transition-all duration-300 bg-red-600 hover:bg-red-700 border-red-600"
               onClick={handleRedeemPoints}
             >
               🎯 {gameConfig.finishButtonText} <ExternalLink className="ml-2 h-5 w-5" />
             </Button>
 
             <div className="flex flex-col sm:flex-row justify-center gap-4">
-              <Button className="bg-red-600 hover:bg-red-700 text-white game-button px-6 py-3" onClick={handleTryAgain}>
+              <Button className="bg-red-600 hover:bg-red-700 text-white font-bold px-6 py-3" onClick={handleTryAgain}>
                 🔄 Jogar Novamente
               </Button>
 
               <Link href="/">
                 <Button
                   variant="outline"
-                  className="border-2 border-red-600 text-red-300 hover:bg-red-900/50 hover:text-white game-button px-6 py-3 bg-transparent"
+                  className="border-2 border-red-600 text-red-600 hover:bg-red-50 hover:text-red-700 font-bold px-6 py-3 bg-white"
                 >
                   🏠 Voltar ao Início
                 </Button>
@@ -690,13 +734,13 @@ export default function Game() {
     <main className="flex min-h-screen flex-col items-center p-4 bg-gradient-to-br from-red-950 via-red-900 to-red-800">
       <div className="w-full max-w-5xl">
         {/* Enhanced Header */}
-        <div className="flex justify-between items-center p-6 game-backdrop rounded-xl mb-6 shadow-lg">
+        <div className="flex justify-between items-center p-6 bg-black/40 backdrop-blur-sm rounded-xl mb-6 shadow-lg border border-red-600/30">
           <Link href="/" className="text-red-200 hover:text-white transition-colors font-semibold flex items-center">
             ← <span className="ml-2 hidden sm:inline">Sair</span>
           </Link>
           <div className="flex items-center">
             <Image src="/images/logo.png" alt="Flamboyant Shopping Logo" width={40} height={40} className="mr-3" />
-            <h1 className="text-lg sm:text-xl font-bold text-white game-text-shadow">{gameConfig.gameTitle}</h1>
+            <h1 className="text-lg sm:text-xl font-bold text-white drop-shadow-lg">{gameConfig.gameTitle}</h1>
           </div>
           <div className="flex items-center space-x-2">
             <Button
@@ -717,7 +761,7 @@ export default function Game() {
             >
               {soundEnabled ? <Volume2 className="h-4 w-4" /> : <VolumeX className="h-4 w-4" />}
             </Button>
-            <div className="flex items-center space-x-2 bg-yellow-900/30 px-3 py-2 rounded-lg border border-yellow-600">
+            <div className="flex items-center space-x-2 bg-yellow-600/20 px-3 py-2 rounded-lg border border-yellow-600">
               <Star className="h-5 w-5 text-yellow-400" />
               <span className="text-lg text-yellow-300 font-bold">{totalPoints}</span>
             </div>
@@ -725,102 +769,91 @@ export default function Game() {
         </div>
 
         {showIntro ? (
-          <Card className="game-card text-white shadow-2xl max-w-4xl mx-auto">
-            <CardHeader className="text-center pb-4">
-              <CardTitle className="text-3xl text-red-200 flex items-center justify-center game-text-shadow">
-                <AlertTriangle className="mr-3 h-8 w-8 text-red-400" />🚨 Desafio de Segurança
+          <Card className="bg-white text-gray-800 shadow-2xl max-w-4xl mx-auto border-4 border-red-600">
+            <CardHeader className="text-center pb-4 bg-red-600 text-white rounded-t-lg">
+              <CardTitle className="text-3xl flex items-center justify-center font-bold">
+                <AlertTriangle className="mr-3 h-8 w-8 text-yellow-300" />
+                {"🚨 Desafio de Segurança"}
               </CardTitle>
-              <CardDescription className="text-gray-200 text-lg font-medium game-text-shadow">
+              <CardDescription className="text-red-100 text-lg font-medium">
                 Teste seus conhecimentos sobre segurança da informação no {gameConfig.companyName}.
               </CardDescription>
             </CardHeader>
-            <CardContent className="space-y-6">
-              <p className="text-white text-lg leading-relaxed font-medium game-text-shadow text-center">
+            <CardContent className="space-y-6 p-8">
+              <p className="text-gray-800 text-lg leading-relaxed font-medium text-center">
                 Você enfrentará {questions.length} perguntas sobre segurança da informação. Cada pergunta tem um tempo
                 limite para ser respondida e vale pontos pela resposta correta.
               </p>
 
               {/* Achievement Levels Preview */}
-              <div className="p-6 bg-gradient-to-r from-purple-900/40 to-blue-900/40 rounded-xl border-2 border-purple-600 mt-6">
-                <h3 className="font-bold text-purple-200 mb-4 text-xl game-text-shadow text-center">
-                  🏆 Níveis de Conquista:
-                </h3>
+              <div className="p-6 bg-red-50 rounded-xl border-2 border-red-200 mt-6">
+                <h3 className="font-bold text-red-700 mb-4 text-xl text-center">🏆 Níveis de Conquista:</h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {Object.values(gameConfig.achievementIds).map((achievement, index) => (
+                  {Object.values(achievementLevels).map((achievement, index) => (
                     <div
                       key={index}
-                      className="flex items-center p-3 rounded-lg border"
+                      className="flex items-center p-4 rounded-lg border-2 bg-white shadow-sm"
                       style={{
-                        backgroundColor: `${achievement.color}20`,
                         borderColor: achievement.color,
                       }}
                     >
-                      <div className="mr-3">
-                        {achievement.id.includes("platinum") && (
-                          <Crown className="h-6 w-6" style={{ color: achievement.color }} />
-                        )}
-                        {achievement.id.includes("gold") && (
-                          <Trophy className="h-6 w-6" style={{ color: achievement.color }} />
-                        )}
-                        {achievement.id.includes("silver") && (
-                          <Medal className="h-6 w-6" style={{ color: achievement.color }} />
-                        )}
-                        {achievement.id.includes("bronze") && (
-                          <Award className="h-6 w-6" style={{ color: achievement.color }} />
-                        )}
+                      <div className="mr-3 w-12 h-12 rounded-full overflow-hidden border-2 border-gray-300">
+                        <Image
+                          src={achievement.image || "/placeholder.svg"}
+                          alt={achievement.name}
+                          width={48}
+                          height={48}
+                          className="w-full h-full object-cover"
+                        />
                       </div>
                       <div>
-                        <h4 className="font-bold text-sm" style={{ color: achievement.color }}>
-                          {achievement.name}
-                        </h4>
-                        <p className="text-xs text-gray-300">
+                        <h4 className="font-bold text-lg text-gray-800">{achievement.name}</h4>
+                        <p className="text-sm text-gray-600">
                           {achievement.minPercentage}%-{achievement.maxPercentage}% de acerto
                         </p>
-                        <p className="text-xs text-yellow-300">{achievement.points} pontos GamiPress</p>
+                        <p className="text-sm text-red-600 font-semibold">{achievement.points} pontos</p>
                       </div>
                     </div>
                   ))}
                 </div>
               </div>
 
-              <div className="p-6 bg-yellow-900/40 rounded-xl border-2 border-yellow-600 mt-6">
-                <h3 className="font-bold text-yellow-200 mb-4 text-xl game-text-shadow text-center">
-                  🎯 Como Funciona:
-                </h3>
+              <div className="p-6 bg-yellow-50 rounded-xl border-2 border-yellow-300 mt-6">
+                <h3 className="font-bold text-yellow-800 mb-4 text-xl text-center">🎯 Como Funciona:</h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <ul className="space-y-3 text-white font-medium">
+                  <ul className="space-y-3 text-gray-800 font-medium">
                     <li className="flex items-center">
-                      <span className="text-yellow-400 mr-3">⏱️</span>
+                      <span className="text-yellow-600 mr-3">⏱️</span>
                       Cada pergunta tem tempo limitado (10-18 segundos)
                     </li>
                     <li className="flex items-center">
-                      <span className="text-yellow-400 mr-3">🏆</span>
+                      <span className="text-yellow-600 mr-3">🏆</span>
                       Respostas corretas valem 25 pontos cada
                     </li>
                     <li className="flex items-center">
-                      <span className="text-yellow-400 mr-3">📈</span>
+                      <span className="text-yellow-600 mr-3">📈</span>
                       Pontuação máxima: 200 pontos
                     </li>
                   </ul>
-                  <ul className="space-y-3 text-white font-medium">
+                  <ul className="space-y-3 text-gray-800 font-medium">
                     <li className="flex items-center">
-                      <span className="text-yellow-400 mr-3">🎵</span>Música ambiente corporativa para concentração
+                      <span className="text-yellow-600 mr-3">🎵</span>Música ambiente corporativa para concentração
                     </li>
                     <li className="flex items-center">
-                      <span className="text-yellow-400 mr-3">🔊</span>
+                      <span className="text-yellow-600 mr-3">🔊</span>
                       Sons indicam respostas corretas/incorretas
                     </li>
                     <li className="flex items-center">
-                      <span className="text-yellow-400 mr-3">🎁</span>
+                      <span className="text-yellow-600 mr-3">🎁</span>
                       Conquistas baseadas na sua performance
                     </li>
                   </ul>
                 </div>
               </div>
             </CardContent>
-            <CardFooter>
+            <CardFooter className="p-8">
               <Button
-                className="w-full bg-red-600 hover:bg-red-700 text-white text-xl py-6 game-button"
+                className="w-full bg-red-600 hover:bg-red-700 text-white text-xl py-6 font-bold"
                 onClick={handleStartGame}
               >
                 🚀 Iniciar Desafio
@@ -830,7 +863,7 @@ export default function Game() {
         ) : (
           <div className="space-y-6">
             {/* Progress Bar */}
-            <div className="bg-black/40 rounded-xl p-4 shadow-lg">
+            <div className="bg-black/40 backdrop-blur-sm rounded-xl p-4 shadow-lg border border-red-600/30">
               <div className="flex justify-between items-center mb-3">
                 <span className="text-white font-semibold">Progresso do Desafio</span>
                 <span className="text-gray-300 text-sm">
@@ -846,38 +879,36 @@ export default function Game() {
             </div>
 
             {/* Question Card */}
-            <Card className="game-card text-white shadow-2xl">
-              <CardHeader className="pb-4">
+            <Card className="bg-white text-gray-800 shadow-2xl border-4 border-red-600">
+              <CardHeader className="pb-4 bg-red-600 text-white">
                 <div className="flex justify-between items-start mb-4">
                   <div className="flex items-center space-x-3">
-                    <div className="bg-red-600 rounded-full p-2">
-                      <span className="text-white font-bold text-lg">{currentQuestion + 1}</span>
+                    <div className="bg-white text-red-600 rounded-full p-2 font-bold">
+                      <span className="text-lg">{currentQuestion + 1}</span>
                     </div>
-                    <CardTitle className="text-2xl text-red-200 game-text-shadow">
-                      Pergunta {currentQuestion + 1}
-                    </CardTitle>
+                    <CardTitle className="text-2xl font-bold">Pergunta {currentQuestion + 1}</CardTitle>
                   </div>
 
                   {/* Enhanced Timer */}
                   <div
                     className={`flex items-center space-x-2 px-4 py-2 rounded-lg border-2 ${
                       questionTimeLeft <= 3
-                        ? "bg-red-900/50 border-red-500"
+                        ? "bg-red-100 border-red-500 text-red-600"
                         : questionTimeLeft <= 7
-                          ? "bg-yellow-900/50 border-yellow-500"
-                          : "bg-green-900/50 border-green-500"
+                          ? "bg-yellow-100 border-yellow-500 text-yellow-600"
+                          : "bg-green-100 border-green-500 text-green-600"
                     }`}
                   >
-                    <Timer className={`h-5 w-5 ${getTimerColor()}`} />
-                    <span className={`text-2xl font-bold font-mono ${getTimerColor()}`}>{questionTimeLeft}s</span>
+                    <Timer className="h-5 w-5" />
+                    <span className="text-2xl font-bold font-mono">{questionTimeLeft}s</span>
                   </div>
                 </div>
               </CardHeader>
 
-              <CardContent className="space-y-6">
+              <CardContent className="space-y-6 p-8">
                 {/* Question Text */}
-                <div className="p-6 bg-gradient-to-r from-black/60 to-black/40 rounded-xl border-l-4 border-red-500 shadow-inner">
-                  <p className="text-xl sm:text-2xl text-white leading-relaxed font-semibold game-text-shadow">
+                <div className="p-6 bg-red-50 rounded-xl border-l-4 border-red-500 shadow-inner">
+                  <p className="text-xl sm:text-2xl text-gray-800 leading-relaxed font-semibold">
                     {questions[currentQuestion].text}
                   </p>
                 </div>
@@ -888,12 +919,12 @@ export default function Game() {
                     <Button
                       key={index}
                       variant="outline"
-                      className="w-full justify-start text-left py-6 px-6 border-2 border-red-600/50 hover:border-red-400 hover:bg-red-700/30 text-white bg-red-900/20 hover:text-white text-base sm:text-lg leading-relaxed game-button font-medium transition-all duration-200 group"
+                      className="w-full justify-start text-left py-6 px-6 border-2 border-red-300 hover:border-red-500 hover:bg-red-50 text-gray-800 bg-white hover:text-red-700 text-base sm:text-lg leading-relaxed font-medium transition-all duration-200 group"
                       onClick={() => handleOptionClick(option.correct, questions[currentQuestion].points)}
                       disabled={questionTimeLeft === 0}
                     >
                       <div className="flex items-center w-full">
-                        <span className="bg-red-600 text-white rounded-full w-8 h-8 flex items-center justify-center mr-4 font-bold text-lg group-hover:bg-red-500 transition-colors">
+                        <span className="bg-red-600 text-white rounded-full w-8 h-8 flex items-center justify-center mr-4 font-bold text-lg group-hover:bg-red-700 transition-colors">
                           {String.fromCharCode(65 + index)}
                         </span>
                         <span className="font-semibold flex-1">{option.text}</span>
@@ -909,18 +940,18 @@ export default function Game() {
 
       {/* Enhanced Feedback Dialog */}
       <Dialog open={showFeedback} onOpenChange={setShowFeedback}>
-        <DialogContent className="game-card text-white border-2 border-red-600 max-w-3xl">
+        <DialogContent className="bg-white text-gray-800 border-4 border-red-600 max-w-3xl">
           <DialogHeader>
             <DialogTitle className="flex items-center space-x-3">
               {isCorrect ? (
-                <CheckCircle2 className="h-8 w-8 text-green-400" />
+                <CheckCircle2 className="h-8 w-8 text-green-600" />
               ) : (
-                <XCircle className="h-8 w-8 text-red-400" />
+                <XCircle className="h-8 w-8 text-red-600" />
               )}
               <span
                 className={`text-2xl font-bold ${
-                  isCorrect ? "text-green-400" : questionTimeLeft === 0 ? "text-red-400" : "text-yellow-400"
-                } game-text-shadow`}
+                  isCorrect ? "text-green-600" : questionTimeLeft === 0 ? "text-red-600" : "text-yellow-600"
+                }`}
               >
                 {isCorrect
                   ? "✅ Resposta Correta!"
@@ -929,24 +960,24 @@ export default function Game() {
                     : "⚠️ Resposta Incorreta"}
               </span>
             </DialogTitle>
-            <DialogDescription className="text-gray-200 text-lg">
+            <DialogDescription className="text-gray-700 text-lg">
               {isCorrect && (
-                <div className="flex items-center justify-center p-4 bg-gradient-to-r from-yellow-900/40 to-green-900/40 rounded-lg border border-yellow-600 mt-4">
-                  <Star className="mr-3 h-8 w-8 text-yellow-400" />
-                  <span className="text-2xl font-bold text-yellow-300">+{pointsEarned} pontos!</span>
+                <div className="flex items-center justify-center p-4 bg-green-50 rounded-lg border border-green-300 mt-4">
+                  <Star className="mr-3 h-8 w-8 text-yellow-500" />
+                  <span className="text-2xl font-bold text-green-700">+{pointsEarned} pontos!</span>
                 </div>
               )}
             </DialogDescription>
           </DialogHeader>
 
-          <div className="mt-6 p-6 bg-gradient-to-r from-red-900/40 to-red-800/40 rounded-xl border border-red-700">
-            <h4 className="text-lg font-bold text-red-200 mb-3">💡 Explicação:</h4>
-            <p className="text-gray-100 text-lg leading-relaxed font-medium">{feedbackText}</p>
+          <div className="mt-6 p-6 bg-red-50 rounded-xl border border-red-300">
+            <h4 className="text-lg font-bold text-red-700 mb-3">💡 Explicação:</h4>
+            <p className="text-gray-700 text-lg leading-relaxed font-medium">{feedbackText}</p>
           </div>
 
           <div className="mt-6 flex justify-end">
             <Button
-              className="bg-red-600 hover:bg-red-700 text-white px-8 py-4 text-lg game-button flex items-center space-x-2"
+              className="bg-red-600 hover:bg-red-700 text-white px-8 py-4 text-lg font-bold flex items-center space-x-2"
               onClick={handleContinue}
             >
               <span>➡️ {currentQuestion < questions.length - 1 ? "Próxima Pergunta" : "Ver Resultado"}</span>

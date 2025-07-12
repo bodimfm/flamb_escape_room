@@ -5,7 +5,7 @@
 
 export const gameConfig = {
   // URL for redirection after game completion
-  redirectUrl: "https://seusite.com/obrigado/",
+  redirectUrl: "https://v0-escape-room-game-development.vercel.app/obrigado/",
 
   // Game information
   gameTitle: "Desafio de Segurança - Vazamento de Dados",
@@ -20,7 +20,7 @@ export const gameConfig = {
 
   // GamiPress integration
   enableGamiPressTracking: true,
-  gamiPressWebhookUrl: "https://seusite.com/wp-json/gamipress/v1/achievements/award",
+  gamiPressWebhookUrl: "https://v0-escape-room-game-development.vercel.app/wp-json/gamipress/v1/achievements/award",
 
   // Performance-based achievement IDs for GamiPress
   achievementIds: {

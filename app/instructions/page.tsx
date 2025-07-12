@@ -258,7 +258,7 @@ export default function Instructions() {
                         }}
                         onClick={() => {
                           // This would be called when the user achieves this level
-                          const redirectUrl = `https://seusite.com/conquista/?achievement_id=${range.id}&level=${range.name}&score_range=${range.range}`
+                          const redirectUrl = `https://v0-escape-room-game-development.vercel.app/conquista/?achievement_id=${range.id}&level=${range.name}&score_range=${range.range}`
                           console.log(`Redirect URL for ${range.name}:`, redirectUrl)
                         }}
                       >

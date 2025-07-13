@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Integração WordPress - Escape Room</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .code-block {
+            background: #f8f9fa;
+            border: 1px solid #e9ecef;
+            border-radius: 4px;
+            padding: 15px;
+            margin: 10px 0;
+            font-family: 'Courier New', monospace;
+            overflow-x: auto;
+        }
+        .iframe-container {
+            border: 2px solid #dc2626;
+            border-radius: 8px;
+            overflow: hidden;
+            margin: 20px 0;
+        }
+        iframe {
+            width: 100%;
+            height: 600px;
+            border: none;
+        }
+        .alert {
+            padding: 15px;
+            margin: 15px 0;
+            border-radius: 4px;
+            border-left: 4px solid #dc2626;
+            background-color: #fef2f2;
+            color: #991b1b;
+        }
+        .success {
+            border-left-color: #059669;
+            background-color: #f0fdf4;
+            color: #065f46;
+        }
+        .info {
+            border-left-color: #0284c7;
+            background-color: #f0f9ff;
+            color: #0c4a6e;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎮 Integração WordPress - Escape Room</h1>
+        
+        <div class="alert info">
+            <strong>📋 Instruções de Integração:</strong><br>
+            Use os códigos abaixo para integrar o jogo no seu site WordPress.
+        </div>
+
+        <h2>1. Shortcode para WordPress</h2>
+        <p>Cole este shortcode em qualquer página ou post do WordPress:</p>
+        <div class="code-block">
+[escape_room_game user_id="current_user" width="100%" height="600px"]
+        </div>
+
+        <h2>2. Código PHP para functions.php</h2>
+        <p>Adicione este código no arquivo <code>functions.php</code> do seu tema:</p>
+        <div class="code-block">
+// Shortcode para o Escape Room Game
+function escape_room_game_shortcode($atts) {
+    $atts = shortcode_atts(array(
+        'user_id' => get_current_user_id(),
+        'width' => '100%',
+        'height' => '600px'
+    ), $atts);
+    
+    $game_url = 'https://v0-escape-room-game-development.vercel.app/game?user_id=' . $atts['user_id'];
+    
+    return '&lt;div class="escape-room-container"&gt;
+        &lt;iframe src="' . esc_url($game_url) . '" 
+                width="' . esc_attr($atts['width']) . '" 
+                height="' . esc_attr($atts['height']) . '" 
+                frameborder="0" 
+                allowfullscreen
+                id="escape-room-iframe"&gt;
+        &lt;/iframe&gt;
+        &lt;script&gt;
+            window.addEventListener("message", function(event) {
+                if (event.data.type === "ESCAPE_ROOM_COMPLETE") {
+                    console.log("Jogo completado:", event.data.data);
+                    
+                    // Processar conquista via AJAX
+                    jQuery.ajax({
+                        url: ajaxurl,
+                        type: "POST",
+                        data: {
+                            action: "process_escape_room_achievement",
+                            game_data: event.data.data,
+                            nonce: "' . wp_create_nonce('escape_room_nonce') . '"
+                        },
+                        success: function(response) {
+                            if (response.success) {
+                                alert("Conquista processada com sucesso!");
+                            }
+                        }
+                    });
+                }
+            });
+        &lt;/script&gt;
+    &lt;/div&gt;';
+}
+add_shortcode('escape_room_game', 'escape_room_game_shortcode');
+
+// AJAX handler para processar conquistas
+function process_escape_room_achievement() {
+    check_ajax_referer('escape_room_nonce', 'nonce');
+    
+    $game_data = $_POST['game_data'];
+    $user_id = get_current_user_id();
+    
+    // Processar conquista baseada nos dados do jogo
+    if ($game_data['completed']) {
+        $achievement_id = $game_data['achievement_id'];
+        $points = $game_data['gamipress_points'];
+        
+        // Integração com GamiPress (se instalado)
+        if (function_exists('gamipress_award_achievement_to_user')) {
+            gamipress_award_achievement_to_user($achievement_id, $user_id);
+            gamipress_award_points_to_user($user_id, $points, 'escape_room_completion');
+        }
+        
+        // Salvar dados do jogo no user meta
+        update_user_meta($user_id, 'escape_room_last_score', $game_data['points']);
+        update_user_meta($user_id, 'escape_room_best_percentage', $game_data['percentage']);
+        update_user_meta($user_id, 'escape_room_completions', 
+            get_user_meta($user_id, 'escape_room_completions', true) + 1);
+        
+        wp_send_json_success(array(
+            'message' => 'Conquista processada com sucesso!',
+            'achievement' => $achievement_id,
+            'points' => $points
+        ));
+    }
+    
+    wp_send_json_error('Dados inválidos');
+}
+add_action('wp_ajax_process_escape_room_achievement', 'process_escape_room_achievement');
+add_action('wp_ajax_nopriv_process_escape_room_achievement', 'process_escape_room_achievement');
+        </div>
+
+        <h2>3. CSS Personalizado (Opcional)</h2>
+        <p>Adicione este CSS para melhorar a aparência:</p>
+        <div class="code-block">
+.escape-room-container {
+    border: 3px solid #dc2626;
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 8px 25px rgba(220, 38, 38, 0.15);
+    margin: 20px 0;
+    background: linear-gradient(135deg, #fef2f2, #ffffff);
+    padding: 10px;
+}
+
+.escape-room-container iframe {
+    border-radius: 8px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+}
+
+@media (max-width: 768px) {
+    .escape-room-container {
+        margin: 10px -15px;
+        border-radius: 0;
+    }
+}
+        </div>
+
+        <h2>4. Preview do Jogo</h2>
+        <div class="iframe-container">
+            <iframe src="https://v0-escape-room-game-development.vercel.app/game?user_id=demo_user" 
+                    allowfullscreen>
+            </iframe>
+        </div>
+
+        <div class="alert success">
+            <strong>✅ Recursos Incluídos:</strong><br>
+            • Detecção automática de iframe (modo embedded)<br>
+            • Comunicação via postMessage com WordPress<br>
+            • Integração automática com GamiPress<br>
+            • Shortcodes personalizáveis<br>
+            • Responsivo para mobile<br>
+            • Tracking de conquistas e pontuações
+        </div>
+
+        <h2>5. Configurações Avançadas</h2>
+        
+        <h3>Shortcode com Parâmetros:</h3>
+        <div class="code-block">
+[escape_room_game user_id="123" width="800px" height="700px"]
+        </div>
+
+        <h3>Integração com GamiPress:</h3>
+        <p>O jogo se integra automaticamente com o GamiPress se estiver instalado. As conquistas disponíveis são:</p>
+        <ul>
+            <li><strong>ciber_aprendiz</strong> - 0-25% de acerto (50 pontos)</li>
+            <li><strong>ciber_vigilante</strong> - 26-50% de acerto (100 pontos)</li>
+            <li><strong>ciber_guardiao</strong> - 51-75% de acerto (150 pontos)</li>
+            <li><strong>ciber_embaixador_flamboyant</strong> - 76-100% de acerto (200 pontos)</li>
+        </ul>
+
+        <div class="alert">
+            <strong>⚠️ Importante:</strong><br>
+            Certifique-se de que o GamiPress está instalado e configurado com as conquistas correspondentes aos IDs acima.
+        </div>
+    </div>
+
+    <script>
+        // Exemplo de como escutar mensagens do jogo
+        window.addEventListener('message', function(event) {
+            if (event.data.type === 'ESCAPE_ROOM_COMPLETE') {
+                console.log('Dados do jogo recebidos:', event.data.data);
+                
+                // Aqui você pode processar os dados como quiser
+                const gameData = event.data.data;
+                
+                // Exemplo: mostrar notificação
+                if (gameData.completed) {
+                    alert(`Parabéns! Você conquistou: ${gameData.achievement_name}\nPontos: ${gameData.gamipress_points}`);
+                }
+            }
+        });
+    </script>
+</body>
+</html>

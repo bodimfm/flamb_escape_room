@@ -1,0 +1,427 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WordPress Shortcode - Escape Room</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .code-block {
+            background: #f8f9fa;
+            border: 1px solid #e9ecef;
+            border-radius: 4px;
+            padding: 15px;
+            margin: 10px 0;
+            font-family: 'Courier New', monospace;
+            overflow-x: auto;
+        }
+        .iframe-container {
+            border: 3px solid #dc2626;
+            border-radius: 12px;
+            overflow: hidden;
+            margin: 20px 0;
+            background: linear-gradient(135deg, #fef2f2, #ffffff);
+            padding: 10px;
+        }
+        iframe {
+            width: 100%;
+            height: 600px;
+            border: none;
+            border-radius: 8px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+        }
+        .alert {
+            padding: 15px;
+            margin: 15px 0;
+            border-radius: 4px;
+            border-left: 4px solid #dc2626;
+            background-color: #fef2f2;
+            color: #991b1b;
+        }
+        .success {
+            border-left-color: #059669;
+            background-color: #f0fdf4;
+            color: #065f46;
+        }
+        .info {
+            border-left-color: #0284c7;
+            background-color: #f0f9ff;
+            color: #0c4a6e;
+        }
+        .step {
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 20px 0;
+        }
+        .step h3 {
+            color: #1e293b;
+            margin-top: 0;
+        }
+        .tab-container {
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            overflow: hidden;
+            margin: 20px 0;
+        }
+        .tab-header {
+            background: #f1f5f9;
+            padding: 15px;
+            font-weight: bold;
+            color: #334155;
+            cursor: pointer;
+            border-bottom: 1px solid #e2e8f0;
+        }
+        .tab-content {
+            padding: 20px;
+            display: none;
+        }
+        .tab-content.active {
+            display: block;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎮 WordPress Integration - Escape Room Vanilla</h1>
+        
+        <div class="alert info">
+            <strong>📋 Integração Completa:</strong><br>
+            Jogo convertido para HTML/JS/CSS vanilla para máxima compatibilidade com WordPress.
+        </div>
+
+        <div class="step">
+            <h3>📁 Passo 1: Upload dos Arquivos</h3>
+            <p>Faça upload do arquivo <code>escape-room-vanilla.html</code> para seu servidor WordPress:</p>
+            <div class="code-block">
+/wp-content/themes/seu-tema/escape-room/
+├── escape-room-vanilla.html
+└── images/
+    ├── logo.png
+    └── achievements/
+        ├── ciber-aprendiz.png
+        ├── ciber-vigilante.png
+        ├── ciber-guardiao.png
+        └── ciber-embaixador.png
+            </div>
+        </div>
+
+        <div class="step">
+            <h3>⚙️ Passo 2: Código PHP para functions.php</h3>
+            <p>Adicione este código no arquivo <code>functions.php</code> do seu tema:</p>
+            
+            <div class="tab-container">
+                <div class="tab-header" onclick="toggleTab('tab1')">
+                    📄 Shortcode Básico
+                </div>
+                <div id="tab1" class="tab-content active">
+                    <div class="code-block">
+// Shortcode para o Escape Room Game (Vanilla)
+function escape_room_vanilla_shortcode($atts) {
+    $atts = shortcode_atts(array(
+        'user_id' => get_current_user_id(),
+        'width' => '100%',
+        'height' => '600px'
+    ), $atts);
+    
+    $game_url = get_template_directory_uri() . '/escape-room/escape-room-vanilla.html?user_id=' . $atts['user_id'];
+    
+    return '&lt;div class="escape-room-vanilla-container"&gt;
+        &lt;iframe src="' . esc_url($game_url) . '" 
+                width="' . esc_attr($atts['width']) . '" 
+                height="' . esc_attr($atts['height']) . '" 
+                frameborder="0" 
+                allowfullscreen
+                id="escape-room-vanilla-iframe"&gt;
+        &lt;/iframe&gt;
+        &lt;script&gt;
+            window.addEventListener("message", function(event) {
+                if (event.data.type === "ESCAPE_ROOM_COMPLETE") {
+                    console.log("Jogo completado:", event.data.data);
+                    
+                    // Processar conquista via AJAX
+                    jQuery.ajax({
+                        url: ajaxurl,
+                        type: "POST",
+                        data: {
+                            action: "process_escape_room_vanilla_achievement",
+                            game_data: event.data.data,
+                            nonce: "' . wp_create_nonce('escape_room_vanilla_nonce') . '"
+                        },
+                        success: function(response) {
+                            if (response.success) {
+                                alert("Conquista processada com sucesso!");
+                                // Opcional: recarregar a página ou redirecionar
+                                // window.location.reload();
+                            }
+                        },
+                        error: function() {
+                            alert("Erro ao processar conquista. Tente novamente.");
+                        }
+                    });
+                }
+            });
+        &lt;/script&gt;
+    &lt;/div&gt;';
+}
+add_shortcode('escape_room_vanilla', 'escape_room_vanilla_shortcode');
+                    </div>
+                </div>
+            </div>
+
+            <div class="tab-container">
+                <div class="tab-header" onclick="toggleTab('tab2')">
+                    🎯 AJAX Handler Completo
+                </div>
+                <div id="tab2" class="tab-content">
+                    <div class="code-block">
+// AJAX handler para processar conquistas do Escape Room Vanilla
+function process_escape_room_vanilla_achievement() {
+    check_ajax_referer('escape_room_vanilla_nonce', 'nonce');
+    
+    $game_data = $_POST['game_data'];
+    $user_id = get_current_user_id();
+    
+    if (!$user_id) {
+        wp_send_json_error('Usuário não logado');
+        return;
+    }
+    
+    // Validar dados do jogo
+    if (!$game_data['completed'] || !isset($game_data['achievement_id'])) {
+        wp_send_json_error('Dados do jogo inválidos');
+        return;
+    }
+    
+    $achievement_id = sanitize_text_field($game_data['achievement_id']);
+    $points = intval($game_data['gamipress_points']);
+    $game_points = intval($game_data['points']);
+    $percentage = intval($game_data['percentage']);
+    $correct_answers = intval($game_data['correct_answers']);
+    $total_questions = intval($game_data['total_questions']);
+    
+    // Verificar se o usuário já completou o jogo hoje (opcional)
+    $last_completion = get_user_meta($user_id, 'escape_room_last_completion', true);
+    $today = date('Y-m-d');
+    
+    if ($last_completion === $today) {
+        wp_send_json_error('Você já completou o desafio hoje. Tente novamente amanhã.');
+        return;
+    }
+    
+    // Integração com GamiPress (se instalado)
+    $gamipress_success = false;
+    if (function_exists('gamipress_award_achievement_to_user')) {
+        // Verificar se a conquista existe
+        $achievement_post = get_page_by_path($achievement_id, OBJECT, 'achievement');
+        
+        if ($achievement_post) {
+            // Verificar se o usuário já possui esta conquista
+            $user_achievements = gamipress_get_user_achievements(array(
+                'user_id' => $user_id,
+                'achievement_id' => $achievement_post->ID
+            ));
+            
+            if (empty($user_achievements)) {
+                // Conceder conquista
+                $achievement_awarded = gamipress_award_achievement_to_user($achievement_post->ID, $user_id);
+                
+                if ($achievement_awarded) {
+                    // Conceder pontos
+                    gamipress_award_points_to_user($user_id, $points, 'escape_room_completion');
+                    $gamipress_success = true;
+                }
+            } else {
+                $gamipress_success = true; // Já possui a conquista
+            }
+        }
+    }
+    
+    // Salvar estatísticas do usuário
+    update_user_meta($user_id, 'escape_room_last_completion', $today);
+    update_user_meta($user_id, 'escape_room_last_score', $game_points);
+    update_user_meta($user_id, 'escape_room_best_percentage', max($percentage, get_user_meta($user_id, 'escape_room_best_percentage', true)));
+    update_user_meta($user_id, 'escape_room_total_completions', get_user_meta($user_id, 'escape_room_total_completions', true) + 1);
+    update_user_meta($user_id, 'escape_room_last_achievement', $achievement_id);
+    
+    // Log da atividade (opcional)
+    if (function_exists('gamipress_insert_log')) {
+        gamipress_insert_log(array(
+            'title' => 'Escape Room Completado',
+            'description' => sprintf('Usuário completou o Escape Room com %d%% de acerto', $percentage),
+            'type' => 'escape_room_completion',
+            'user_id' => $user_id,
+            'meta' => array(
+                'percentage' => $percentage,
+                'points' => $game_points,
+                'achievement' => $achievement_id,
+                'correct_answers' => $correct_answers,
+                'total_questions' => $total_questions
+            )
+        ));
+    }
+    
+    wp_send_json_success(array(
+        'message' => 'Conquista processada com sucesso!',
+        'achievement' => $achievement_id,
+        'points' => $points,
+        'gamipress_success' => $gamipress_success,
+        'game_points' => $game_points,
+        'percentage' => $percentage
+    ));
+}
+add_action('wp_ajax_process_escape_room_vanilla_achievement', 'process_escape_room_vanilla_achievement');
+add_action('wp_ajax_nopriv_process_escape_room_vanilla_achievement', 'process_escape_room_vanilla_achievement');
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="step">
+            <h3>🎨 Passo 3: CSS Personalizado (Opcional)</h3>
+            <p>Adicione este CSS no seu tema para melhorar a aparência:</p>
+            <div class="code-block">
+.escape-room-vanilla-container {
+    border: 3px solid #dc2626;
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 8px 25px rgba(220, 38, 38, 0.15);
+    margin: 20px 0;
+    background: linear-gradient(135deg, #fef2f2, #ffffff);
+    padding: 10px;
+}
+
+.escape-room-vanilla-container iframe {
+    border-radius: 8px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+}
+
+@media (max-width: 768px) {
+    .escape-room-vanilla-container {
+        margin: 10px -15px;
+        border-radius: 0;
+    }
+    
+    .escape-room-vanilla-container iframe {
+        height: 500px;
+    }
+}
+            </div>
+        </div>
+
+        <div class="step">
+            <h3>📝 Passo 4: Como Usar</h3>
+            <p>Use o shortcode em qualquer página ou post:</p>
+            
+            <h4>Shortcode Básico:</h4>
+            <div class="code-block">
+[escape_room_vanilla]
+            </div>
+            
+            <h4>Shortcode com Parâmetros:</h4>
+            <div class="code-block">
+[escape_room_vanilla user_id="123" width="800px" height="700px"]
+            </div>
+            
+            <h4>Shortcode para Usuário Atual:</h4>
+            <div class="code-block">
+[escape_room_vanilla user_id="current_user"]
+            </div>
+        </div>
+
+        <div class="step">
+            <h3>🏆 Passo 5: Configurar GamiPress</h3>
+            <p>Se você usa GamiPress, crie as seguintes conquistas:</p>
+            
+            <table style="width: 100%; border-collapse: collapse; margin: 15px 0;">
+                <thead>
+                    <tr style="background: #f8f9fa;">
+                        <th style="border: 1px solid #dee2e6; padding: 12px; text-align: left;">ID da Conquista</th>
+                        <th style="border: 1px solid #dee2e6; padding: 12px; text-align: left;">Nome</th>
+                        <th style="border: 1px solid #dee2e6; padding: 12px; text-align: left;">Pontos</th>
+                        <th style="border: 1px solid #dee2e6; padding: 12px; text-align: left;">Critério</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td style="border: 1px solid #dee2e6; padding: 12px;"><code>ciber_aprendiz</code></td>
+                        <td style="border: 1px solid #dee2e6; padding: 12px;">Ciber Aprendiz</td>
+                        <td style="border: 1px solid #dee2e6; padding: 12px;">50</td>
+                        <td style="border: 1px solid #dee2e6; padding: 12px;">0-25% de acerto</td>
+                    </tr>
+                    <tr>
+                        <td style="border: 1px solid #dee2e6; padding: 12px;"><code>ciber_vigilante</code></td>
+                        <td style="border: 1px solid #dee2e6; padding: 12px;">Ciber Vigilante</td>
+                        <td style="border: 1px solid #dee2e6; padding: 12px;">100</td>
+                        <td style="border: 1px solid #dee2e6; padding: 12px;">26-50% de acerto</td>
+                    </tr>
+                    <tr>
+                        <td style="border: 1px solid #dee2e6; padding: 12px;"><code>ciber_guardiao</code></td>
+                        <td style="border: 1px solid #dee2e6; padding: 12px;">Ciber Guardião</td>
+                        <td style="border: 1px solid #dee2e6; padding: 12px;">150</td>
+                        <td style="border: 1px solid #dee2e6; padding: 12px;">51-75% de acerto</td>
+                    </tr>
+                    <tr>
+                        <td style="border: 1px solid #dee2e6; padding: 12px;"><code>ciber_embaixador_flamboyant</code></td>
+                        <td style="border: 1px solid #dee2e6; padding: 12px;">Ciber Embaixador Flamboyant</td>
+                        <td style="border: 1px solid #dee2e6; padding: 12px;">200</td>
+                        <td style="border: 1px solid #dee2e6; padding: 12px;">76-100% de acerto</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <h2>🎮 Preview do Jogo</h2>
+        <div class="iframe-container">
+            <iframe src="escape-room-vanilla.html?user_id=demo_user" allowfullscreen></iframe>
+        </div>
+
+        <div class="alert success">
+            <strong>✅ Vantagens da Versão Vanilla:</strong><br>
+            • Zero dependências externas<br>
+            • Compatível com qualquer versão do WordPress<br>
+            • Carregamento mais rápido<br>
+            • Funciona offline após carregamento inicial<br>
+            • Fácil customização de estilos<br>
+            • Comunicação direta via postMessage<br>
+            • Suporte completo a mobile
+        </div>
+
+        <div class="alert info">
+            <strong>📱 Recursos Incluídos:</strong><br>
+            • Interface responsiva para mobile e desktop<br>
+            • Sistema de áudio com Web Audio API<br>
+            • Timer visual com mudanças de cor<br>
+            • Feedback imediato para respostas<br>
+            • Integração automática com GamiPress<br>
+            • Detecção de modo embedded<br>
+            • Shortcodes automáticos para WordPress<br>
+            • Sistema de conquistas baseado em performance
+        </div>
+    </div>
+
+    <script>
+        function toggleTab(tabId) {
+            // Hide all tab contents
+            const contents = document.querySelectorAll('.tab-content');
+            contents.forEach(content => content.classList.remove('active'));
+            
+            // Show selected tab
+            document.getElementById(tabId).classList.add('active');
+        }
+    </script>
+</body>
+</html>

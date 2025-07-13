@@ -36,7 +36,7 @@ const achievementLevels = {
     points: 50,
     color: "#DC2626", // Flamboyant red
     image: "/images/achievements/ciber-aprendiz.png",
-    url: "https://v0-escape-room-game-development.vercel.app/ciber-aprendiz",
+    shortcode: "[gamipress_award_achievement id='ciber_aprendiz' user_id='USER_ID' points='50']",
   },
   ciber_vigilante_badge: {
     id: "ciber_vigilante_badge",
@@ -47,7 +47,7 @@ const achievementLevels = {
     points: 100,
     color: "#B91C1C", // Darker Flamboyant red
     image: "/images/achievements/ciber-vigilante.png",
-    url: "https://v0-escape-room-game-development.vercel.app/ciber-vigilante",
+    shortcode: "[gamipress_award_achievement id='ciber_vigilante' user_id='USER_ID' points='100']",
   },
   ciber_guardiao_badge: {
     id: "ciber_guardiao_badge",
@@ -58,7 +58,7 @@ const achievementLevels = {
     points: 150,
     color: "#991B1B", // Deep Flamboyant red
     image: "/images/achievements/ciber-guardiao.png",
-    url: "https://v0-escape-room-game-development.vercel.app/ciber-guardiao",
+    shortcode: "[gamipress_award_achievement id='ciber_guardiao' user_id='USER_ID' points='150']",
   },
   ciber_embaixador_flamboyant_badge: {
     id: "ciber_embaixador_flamboyant_badge",
@@ -69,7 +69,7 @@ const achievementLevels = {
     points: 200,
     color: "#7F1D1D", // Darkest Flamboyant red
     image: "/images/achievements/ciber-embaixador.png",
-    url: "https://v0-escape-room-game-development.vercel.app/ciber-embaixador-flamboyant",
+    shortcode: "[gamipress_award_achievement id='ciber_embaixador_flamboyant' user_id='USER_ID' points='200']",
   },
 }
 
@@ -223,6 +223,7 @@ export default function Game() {
   const [soundEnabled, setSoundEnabled] = useState(true)
   const [musicEnabled, setMusicEnabled] = useState(true)
   const [hasPlayedWarning, setHasPlayedWarning] = useState(false)
+  const [isEmbedded, setIsEmbedded] = useState(false)
 
   // Audio refs
   const correctSoundRef = useRef<HTMLAudioElement | null>(null)
@@ -238,6 +239,11 @@ export default function Game() {
     gainNodes: GainNode[]
     stop: () => void
   } | null>(null)
+
+  // Check if running in iframe (embedded mode)
+  useEffect(() => {
+    setIsEmbedded(window.self !== window.top)
+  }, [])
 
   // Initialize audio elements and background music
   useEffect(() => {
@@ -512,62 +518,78 @@ export default function Game() {
     }
   }
 
+  // Function to send data to parent window (WordPress)
+  const sendToParent = (data: any) => {
+    if (isEmbedded && window.parent) {
+      window.parent.postMessage(
+        {
+          type: "ESCAPE_ROOM_COMPLETE",
+          data: data,
+        },
+        "*",
+      )
+    }
+  }
+
   const handleRedeemPoints = () => {
     const achievement = getAchievementByPerformance(correctAnswers, questions.length)
 
-    // Use the achievement's specific URL
-    let redirectUrl = achievement.url
+    const gameData = {
+      completed: true,
+      points: totalPoints,
+      questions_answered: answeredQuestions,
+      total_questions: questions.length,
+      correct_answers: correctAnswers,
+      percentage: achievement.percentage,
+      achievement_id: achievement.id,
+      achievement_name: achievement.name,
+      gamipress_points: achievement.points,
+      shortcode: achievement.shortcode.replace("USER_ID", userId || "current_user"),
+      user_id: userId || null,
+      timestamp: new Date().toISOString(),
+    }
 
-    // Add query parameters
-    redirectUrl += (redirectUrl.includes("?") ? "&" : "?") + "completed=true"
-    redirectUrl += `&points=${totalPoints}`
-    redirectUrl += `&questions_answered=${answeredQuestions}`
-    redirectUrl += `&total_questions=${questions.length}`
-    redirectUrl += `&correct_answers=${correctAnswers}`
-    redirectUrl += `&percentage=${achievement.percentage}`
-    redirectUrl += `&achievement_id=${achievement.id}`
-    redirectUrl += `&achievement_name=${encodeURIComponent(achievement.name)}`
-    redirectUrl += `&gamipress_points=${achievement.points}`
+    // If embedded, send data to parent window
+    if (isEmbedded) {
+      sendToParent(gameData)
 
-    if (userId) {
-      redirectUrl += `&user_id=${userId}`
+      // Show success message in embedded mode
+      alert(
+        `Parabéns! Você conquistou: ${achievement.name}\nPontos: ${achievement.points}\nO shortcode foi enviado para processamento.`,
+      )
+    } else {
+      // If not embedded, show the shortcode to copy
+      const shortcodeText = achievement.shortcode.replace("USER_ID", userId || "current_user")
+
+      // Create a temporary element to copy shortcode
+      const textArea = document.createElement("textarea")
+      textArea.value = shortcodeText
+      document.body.appendChild(textArea)
+      textArea.select()
+      document.execCommand("copy")
+      document.body.removeChild(textArea)
+
+      alert(
+        `Parabéns! Você conquistou: ${achievement.name}\n\nShortcode copiado para a área de transferência:\n${shortcodeText}\n\nCole este shortcode no WordPress para processar a conquista.`,
+      )
     }
 
     // Track completion with GamiPress if enabled
     if (gameConfig.enableGamiPressTracking && gameConfig.gamiPressWebhookUrl) {
-      const gamiPressData = {
-        event: "escape_room_completed",
-        user_id: userId || "anonymous",
-        points: totalPoints,
-        questions_answered: answeredQuestions,
-        total_questions: questions.length,
-        correct_answers: correctAnswers,
-        percentage: achievement.percentage,
-        achievement_id: achievement.id,
-        achievement_name: achievement.name,
-        gamipress_points: achievement.points,
-        timestamp: new Date().toISOString(),
-      }
-
       fetch(gameConfig.gamiPressWebhookUrl, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify(gamiPressData),
+        body: JSON.stringify(gameData),
       })
         .then((response) => response.json())
         .then((data) => {
           console.log("GamiPress tracking successful:", data)
-          window.location.href = redirectUrl
         })
         .catch((error) => {
           console.error("GamiPress tracking failed:", error)
-          // Redirect even if tracking fails
-          window.location.href = redirectUrl
         })
-    } else {
-      window.location.href = redirectUrl
     }
   }
 
@@ -702,12 +724,26 @@ export default function Game() {
             </ul>
           </div>
 
+          {/* Shortcode Display */}
+          {!isEmbedded && (
+            <div className="p-4 bg-gray-100 rounded-xl border-2 border-gray-300 mb-6">
+              <h4 className="font-bold text-gray-700 mb-2">📋 Shortcode WordPress:</h4>
+              <code className="text-sm bg-white p-2 rounded border block text-left overflow-x-auto">
+                {achievement.shortcode.replace("USER_ID", userId || "current_user")}
+              </code>
+              <p className="text-xs text-gray-600 mt-2">
+                Cole este shortcode no WordPress para processar a conquista automaticamente.
+              </p>
+            </div>
+          )}
+
           <div className="flex flex-col gap-4">
             <Button
               className="w-full text-white flex items-center justify-center text-xl py-6 font-bold border-2 hover:scale-105 transition-all duration-300 bg-red-600 hover:bg-red-700 border-red-600"
               onClick={handleRedeemPoints}
             >
-              🎯 {gameConfig.finishButtonText} <ExternalLink className="ml-2 h-5 w-5" />
+              🎯 {isEmbedded ? "PROCESSAR CONQUISTA" : "COPIAR SHORTCODE"}{" "}
+              {isEmbedded ? <ExternalLink className="ml-2 h-5 w-5" /> : <span className="ml-2">📋</span>}
             </Button>
 
             <div className="flex flex-col sm:flex-row justify-center gap-4">
@@ -715,14 +751,16 @@ export default function Game() {
                 🔄 Jogar Novamente
               </Button>
 
-              <Link href="/">
-                <Button
-                  variant="outline"
-                  className="border-2 border-red-600 text-red-600 hover:bg-red-50 hover:text-red-700 font-bold px-6 py-3 bg-white"
-                >
-                  🏠 Voltar ao Início
-                </Button>
-              </Link>
+              {!isEmbedded && (
+                <Link href="/">
+                  <Button
+                    variant="outline"
+                    className="border-2 border-red-600 text-red-600 hover:bg-red-50 hover:text-red-700 font-bold px-6 py-3 bg-white"
+                  >
+                    🏠 Voltar ao Início
+                  </Button>
+                </Link>
+              )}
             </div>
           </div>
         </div>
@@ -735,9 +773,12 @@ export default function Game() {
       <div className="w-full max-w-5xl">
         {/* Enhanced Header */}
         <div className="flex justify-between items-center p-6 bg-black/40 backdrop-blur-sm rounded-xl mb-6 shadow-lg border border-red-600/30">
-          <Link href="/" className="text-red-200 hover:text-white transition-colors font-semibold flex items-center">
-            ← <span className="ml-2 hidden sm:inline">Sair</span>
-          </Link>
+          {!isEmbedded && (
+            <Link href="/" className="text-red-200 hover:text-white transition-colors font-semibold flex items-center">
+              ← <span className="ml-2 hidden sm:inline">Sair</span>
+            </Link>
+          )}
+          {isEmbedded && <div></div>}
           <div className="flex items-center">
             <Image src="/images/logo.png" alt="Flamboyant Shopping Logo" width={40} height={40} className="mr-3" />
             <h1 className="text-lg sm:text-xl font-bold text-white drop-shadow-lg">{gameConfig.gameTitle}</h1>

@@ -1,0 +1,1583 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Escape Room - Vazamento de Dados</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+            background: linear-gradient(135deg, #7f1d1d, #991b1b, #dc2626);
+            min-height: 100vh;
+            color: white;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 1rem;
+        }
+
+        /* Header Styles */
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: rgba(0, 0, 0, 0.4);
+            backdrop-filter: blur(8px);
+            padding: 1.5rem;
+            border-radius: 12px;
+            margin-bottom: 1.5rem;
+            border: 1px solid rgba(220, 38, 38, 0.3);
+        }
+
+        .header h1 {
+            font-size: 1.25rem;
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .header-controls {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .btn {
+            padding: 0.5rem 1rem;
+            border: 2px solid #dc2626;
+            background: rgba(220, 38, 38, 0.2);
+            color: white;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.2s;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .btn:hover {
+            background: rgba(220, 38, 38, 0.4);
+            transform: translateY(-2px);
+        }
+
+        .btn-primary {
+            background: #dc2626;
+            border-color: #dc2626;
+        }
+
+        .btn-primary:hover {
+            background: #b91c1c;
+        }
+
+        .btn-icon {
+            padding: 0.5rem;
+            min-width: 40px;
+            justify-content: center;
+        }
+
+        .points-display {
+            background: rgba(234, 179, 8, 0.2);
+            border: 1px solid #eab308;
+            padding: 0.5rem 1rem;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        /* Card Styles */
+        .card {
+            background: white;
+            color: #1f2937;
+            border-radius: 16px;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+            border: 4px solid #dc2626;
+            overflow: hidden;
+        }
+
+        .card-header {
+            background: #dc2626;
+            color: white;
+            padding: 2rem;
+            text-align: center;
+        }
+
+        .card-title {
+            font-size: 2rem;
+            font-weight: bold;
+            margin-bottom: 0.5rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.75rem;
+        }
+
+        .card-description {
+            color: #fecaca;
+            font-size: 1.125rem;
+            font-weight: 500;
+        }
+
+        .card-content {
+            padding: 2rem;
+        }
+
+        .card-footer {
+            padding: 2rem;
+        }
+
+        /* Progress Bar */
+        .progress-container {
+            background: rgba(0, 0, 0, 0.4);
+            backdrop-filter: blur(8px);
+            padding: 1rem;
+            border-radius: 12px;
+            margin-bottom: 1.5rem;
+            border: 1px solid rgba(220, 38, 38, 0.3);
+        }
+
+        .progress-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 0.75rem;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 12px;
+            background: #374151;
+            border-radius: 6px;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(to right, #ef4444, #f87171);
+            border-radius: 6px;
+            transition: width 0.5s ease-out;
+        }
+
+        /* Question Styles */
+        .question-header {
+            background: #dc2626;
+            color: white;
+            padding: 1.5rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+        }
+
+        .question-info {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .question-number {
+            background: white;
+            color: #dc2626;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 1.125rem;
+        }
+
+        .timer {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.5rem 1rem;
+            border-radius: 8px;
+            border: 2px solid;
+            font-weight: bold;
+            font-family: monospace;
+            font-size: 1.5rem;
+        }
+
+        .timer.warning {
+            background: #fef3c7;
+            border-color: #f59e0b;
+            color: #d97706;
+        }
+
+        .timer.danger {
+            background: #fef2f2;
+            border-color: #ef4444;
+            color: #dc2626;
+            animation: pulse 1s infinite;
+        }
+
+        .timer.safe {
+            background: #f0fdf4;
+            border-color: #10b981;
+            color: #059669;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        .question-text {
+            background: #fef2f2;
+            padding: 1.5rem;
+            border-radius: 12px;
+            border-left: 4px solid #ef4444;
+            margin-bottom: 1.5rem;
+        }
+
+        .question-text p {
+            font-size: 1.25rem;
+            line-height: 1.75;
+            font-weight: 600;
+            color: #1f2937;
+        }
+
+        /* Options */
+        .options {
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+        }
+
+        .option {
+            width: 100%;
+            padding: 1.5rem;
+            border: 2px solid #fca5a5;
+            background: white;
+            color: #1f2937;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            text-align: left;
+            font-size: 1rem;
+            font-weight: 500;
+            line-height: 1.5;
+        }
+
+        .option:hover {
+            border-color: #ef4444;
+            background: #fef2f2;
+            color: #b91c1c;
+        }
+
+        .option:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .option-letter {
+            background: #dc2626;
+            color: white;
+            border-radius: 50%;
+            width: 32px;
+            height: 32px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 1rem;
+            font-weight: bold;
+            font-size: 1.125rem;
+            transition: background-color 0.2s;
+        }
+
+        .option:hover .option-letter {
+            background: #b91c1c;
+        }
+
+        /* Achievement Levels */
+        .achievement-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 1rem;
+            margin: 1.5rem 0;
+        }
+
+        .achievement-item {
+            display: flex;
+            align-items: center;
+            padding: 1rem;
+            border-radius: 8px;
+            border: 2px solid;
+            background: white;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .achievement-image {
+            width: 48px;
+            height: 48px;
+            border-radius: 50%;
+            border: 2px solid #d1d5db;
+            margin-right: 0.75rem;
+            object-fit: cover;
+        }
+
+        .achievement-info h4 {
+            font-weight: bold;
+            font-size: 1.125rem;
+            color: #1f2937;
+        }
+
+        .achievement-info p {
+            font-size: 0.875rem;
+            color: #6b7280;
+        }
+
+        .achievement-points {
+            font-size: 0.875rem;
+            color: #dc2626;
+            font-weight: 600;
+        }
+
+        /* Modal/Dialog */
+        .modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            padding: 1rem;
+        }
+
+        .modal.hidden {
+            display: none;
+        }
+
+        .modal-content {
+            background: white;
+            border-radius: 16px;
+            border: 4px solid #dc2626;
+            max-width: 600px;
+            width: 100%;
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+
+        .modal-header {
+            padding: 1.5rem;
+            border-bottom: 1px solid #e5e7eb;
+        }
+
+        .modal-title {
+            font-size: 1.5rem;
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            color: #1f2937;
+        }
+
+        .modal-body {
+            padding: 1.5rem;
+        }
+
+        .modal-footer {
+            padding: 1.5rem;
+            border-top: 1px solid #e5e7eb;
+            display: flex;
+            justify-content: flex-end;
+        }
+
+        /* Completion Screen */
+        .completion-screen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.95);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            padding: 1rem;
+        }
+
+        .completion-content {
+            background: white;
+            border-radius: 16px;
+            border: 4px solid #dc2626;
+            max-width: 500px;
+            width: 100%;
+            padding: 2rem;
+            text-align: center;
+            color: #1f2937;
+        }
+
+        .logo-container {
+            position: relative;
+            margin-bottom: 2rem;
+        }
+
+        .logo {
+            width: 120px;
+            height: 120px;
+            border-radius: 50%;
+            object-fit: cover;
+            margin: 0 auto;
+            display: block;
+        }
+
+        .achievement-badge {
+            position: absolute;
+            top: -24px;
+            right: -24px;
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            border: 4px solid white;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+            object-fit: cover;
+        }
+
+        .completion-title {
+            font-size: 2.5rem;
+            font-weight: bold;
+            margin-bottom: 1.5rem;
+            color: #dc2626;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 2rem;
+            margin: 2rem 0;
+        }
+
+        .stat-item {
+            text-align: center;
+        }
+
+        .stat-value {
+            font-size: 2rem;
+            font-weight: bold;
+            color: #dc2626;
+        }
+
+        .stat-label {
+            font-size: 0.875rem;
+            color: #6b7280;
+        }
+
+        .report-section {
+            background: #f0f9ff;
+            border: 2px solid #0ea5e9;
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin: 1.5rem 0;
+            text-align: left;
+        }
+
+        .report-title {
+            font-weight: bold;
+            color: #0c4a6e;
+            margin-bottom: 1rem;
+            font-size: 1.25rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .report-list {
+            list-style: none;
+            padding: 0;
+        }
+
+        .report-list li {
+            display: flex;
+            align-items: center;
+            margin-bottom: 0.75rem;
+            color: #374151;
+            font-size: 1.125rem;
+        }
+
+        .report-list li span:first-child {
+            margin-right: 0.75rem;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .header {
+                flex-direction: column;
+                gap: 1rem;
+            }
+
+            .header h1 {
+                font-size: 1rem;
+            }
+
+            .question-header {
+                flex-direction: column;
+                gap: 1rem;
+                align-items: center;
+            }
+
+            .question-text p {
+                font-size: 1.125rem;
+            }
+
+            .option {
+                padding: 1rem;
+                font-size: 0.875rem;
+            }
+
+            .stats-grid {
+                grid-template-columns: 1fr;
+                gap: 1rem;
+            }
+
+            .achievement-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* Utility Classes */
+        .hidden {
+            display: none !important;
+        }
+
+        .text-center {
+            text-align: center;
+        }
+
+        .mb-4 {
+            margin-bottom: 1rem;
+        }
+
+        .mb-6 {
+            margin-bottom: 1.5rem;
+        }
+
+        .mb-8 {
+            margin-bottom: 2rem;
+        }
+
+        .mt-4 {
+            margin-top: 1rem;
+        }
+
+        .mt-6 {
+            margin-top: 1.5rem;
+        }
+
+        .flex {
+            display: flex;
+        }
+
+        .items-center {
+            align-items: center;
+        }
+
+        .justify-center {
+            justify-content: center;
+        }
+
+        .gap-4 {
+            gap: 1rem;
+        }
+
+        .w-full {
+            width: 100%;
+        }
+
+        /* Icons (using Unicode) */
+        .icon-star::before { content: "⭐"; }
+        .icon-music::before { content: "🎵"; }
+        .icon-volume::before { content: "🔊"; }
+        .icon-volume-off::before { content: "🔇"; }
+        .icon-timer::before { content: "⏱️"; }
+        .icon-check::before { content: "✅"; }
+        .icon-x::before { content: "❌"; }
+        .icon-warning::before { content: "⚠️"; }
+        .icon-trophy::before { content: "🏆"; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <div class="header">
+            <div>
+                <button id="exitBtn" class="btn" style="display: none;">← Sair</button>
+            </div>
+            <h1>
+                <img src="/images/logo.png" alt="Logo" width="40" height="40" style="border-radius: 50%;">
+                Desafio de Segurança - Vazamento de Dados
+            </h1>
+            <div class="header-controls">
+                <button id="musicBtn" class="btn btn-icon" title="Música">
+                    <span class="icon-music"></span>
+                </button>
+                <button id="soundBtn" class="btn btn-icon" title="Som">
+                    <span class="icon-volume"></span>
+                </button>
+                <div class="points-display">
+                    <span class="icon-star"></span>
+                    <span id="pointsDisplay">0</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Intro Screen -->
+        <div id="introScreen" class="card">
+            <div class="card-header">
+                <h2 class="card-title">
+                    <span>⚠️</span>
+                    🚨 Desafio de Segurança
+                </h2>
+                <p class="card-description">
+                    Teste seus conhecimentos sobre segurança da informação no Flamboyant Shopping.
+                </p>
+            </div>
+            <div class="card-content">
+                <p class="text-center mb-6" style="font-size: 1.125rem; line-height: 1.75; font-weight: 500;">
+                    Você enfrentará <strong>8 perguntas</strong> sobre segurança da informação. Cada pergunta tem um tempo
+                    limite para ser respondida e vale pontos pela resposta correta.
+                </p>
+
+                <!-- Achievement Levels Preview -->
+                <div style="background: #fef2f2; padding: 1.5rem; border-radius: 12px; border: 2px solid #fca5a5; margin-top: 1.5rem;">
+                    <h3 style="font-weight: bold; color: #b91c1c; margin-bottom: 1rem; font-size: 1.25rem; text-align: center;">
+                        🏆 Níveis de Conquista:
+                    </h3>
+                    <div class="achievement-grid">
+                        <div class="achievement-item" style="border-color: #DC2626;">
+                            <img src="/images/achievements/ciber-aprendiz.png" alt="Ciber Aprendiz" class="achievement-image">
+                            <div class="achievement-info">
+                                <h4>Ciber Aprendiz</h4>
+                                <p>0%-25% de acerto</p>
+                                <p class="achievement-points">50 pontos</p>
+                            </div>
+                        </div>
+                        <div class="achievement-item" style="border-color: #B91C1C;">
+                            <img src="/images/achievements/ciber-vigilante.png" alt="Ciber Vigilante" class="achievement-image">
+                            <div class="achievement-info">
+                                <h4>Ciber Vigilante</h4>
+                                <p>26%-50% de acerto</p>
+                                <p class="achievement-points">100 pontos</p>
+                            </div>
+                        </div>
+                        <div class="achievement-item" style="border-color: #991B1B;">
+                            <img src="/images/achievements/ciber-guardiao.png" alt="Ciber Guardião" class="achievement-image">
+                            <div class="achievement-info">
+                                <h4>Ciber Guardião</h4>
+                                <p>51%-75% de acerto</p>
+                                <p class="achievement-points">150 pontos</p>
+                            </div>
+                        </div>
+                        <div class="achievement-item" style="border-color: #7F1D1D;">
+                            <img src="/images/achievements/ciber-embaixador.png" alt="Ciber Embaixador Flamboyant" class="achievement-image">
+                            <div class="achievement-info">
+                                <h4>Ciber Embaixador Flamboyant</h4>
+                                <p>76%-100% de acerto</p>
+                                <p class="achievement-points">200 pontos</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div style="background: #fefce8; padding: 1.5rem; border-radius: 12px; border: 2px solid #fde047; margin-top: 1.5rem;">
+                    <h3 style="font-weight: bold; color: #a16207; margin-bottom: 1rem; font-size: 1.25rem; text-align: center;">
+                        🎯 Como Funciona:
+                    </h3>
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1rem;">
+                        <ul style="list-style: none; padding: 0;">
+                            <li style="display: flex; align-items: center; margin-bottom: 0.75rem; color: #1f2937; font-weight: 500;">
+                                <span style="color: #d97706; margin-right: 0.75rem;">⏱️</span>
+                                Cada pergunta tem tempo limitado (10-18 segundos)
+                            </li>
+                            <li style="display: flex; align-items: center; margin-bottom: 0.75rem; color: #1f2937; font-weight: 500;">
+                                <span style="color: #d97706; margin-right: 0.75rem;">🏆</span>
+                                Respostas corretas valem 25 pontos cada
+                            </li>
+                            <li style="display: flex; align-items: center; margin-bottom: 0.75rem; color: #1f2937; font-weight: 500;">
+                                <span style="color: #d97706; margin-right: 0.75rem;">📈</span>
+                                Pontuação máxima: 200 pontos
+                            </li>
+                        </ul>
+                        <ul style="list-style: none; padding: 0;">
+                            <li style="display: flex; align-items: center; margin-bottom: 0.75rem; color: #1f2937; font-weight: 500;">
+                                <span style="color: #d97706; margin-right: 0.75rem;">🎵</span>
+                                Música ambiente corporativa para concentração
+                            </li>
+                            <li style="display: flex; align-items: center; margin-bottom: 0.75rem; color: #1f2937; font-weight: 500;">
+                                <span style="color: #d97706; margin-right: 0.75rem;">🔊</span>
+                                Sons indicam respostas corretas/incorretas
+                            </li>
+                            <li style="display: flex; align-items: center; margin-bottom: 0.75rem; color: #1f2937; font-weight: 500;">
+                                <span style="color: #d97706; margin-right: 0.75rem;">🎁</span>
+                                Conquistas baseadas na sua performance
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+            <div class="card-footer">
+                <button id="startGameBtn" class="btn btn-primary w-full" style="font-size: 1.25rem; padding: 1.5rem;">
+                    🚀 Iniciar Desafio
+                </button>
+            </div>
+        </div>
+
+        <!-- Progress Bar -->
+        <div id="progressContainer" class="progress-container hidden">
+            <div class="progress-header">
+                <span style="font-weight: 600;">Progresso do Desafio</span>
+                <span id="progressText" style="color: #d1d5db; font-size: 0.875rem;">1 de 8</span>
+            </div>
+            <div class="progress-bar">
+                <div id="progressFill" class="progress-fill" style="width: 0%"></div>
+            </div>
+        </div>
+
+        <!-- Question Screen -->
+        <div id="questionScreen" class="card hidden">
+            <div class="question-header">
+                <div class="question-info">
+                    <div id="questionNumber" class="question-number">1</div>
+                    <h2 style="font-size: 1.5rem; font-weight: bold;">Pergunta <span id="questionNumberText">1</span></h2>
+                </div>
+                <div id="timer" class="timer safe">
+                    <span class="icon-timer"></span>
+                    <span id="timerText">15s</span>
+                </div>
+            </div>
+            <div class="card-content">
+                <div class="question-text">
+                    <p id="questionText"></p>
+                </div>
+                <div id="optionsContainer" class="options">
+                    <!-- Options will be inserted here -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Feedback Modal -->
+    <div id="feedbackModal" class="modal hidden">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 id="feedbackTitle" class="modal-title"></h3>
+            </div>
+            <div class="modal-body">
+                <div id="pointsEarned" class="hidden" style="display: flex; align-items: center; justify-content: center; padding: 1rem; background: #f0fdf4; border-radius: 8px; border: 1px solid #10b981; margin-bottom: 1rem;">
+                    <span style="margin-right: 0.75rem; font-size: 2rem;">⭐</span>
+                    <span style="font-size: 1.5rem; font-weight: bold; color: #059669;">+25 pontos!</span>
+                </div>
+                <div style="background: #fef2f2; padding: 1.5rem; border-radius: 12px; border: 1px solid #fca5a5;">
+                    <h4 style="font-size: 1.125rem; font-weight: bold; color: #b91c1c; margin-bottom: 0.75rem;">💡 Explicação:</h4>
+                    <p id="feedbackText" style="color: #374151; font-size: 1.125rem; line-height: 1.75; font-weight: 500;"></p>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button id="continueBtn" class="btn btn-primary" style="padding: 1rem 2rem; font-size: 1.125rem; font-weight: bold;">
+                    ➡️ <span id="continueText">Próxima Pergunta</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Completion Screen -->
+    <div id="completionScreen" class="completion-screen hidden">
+        <div class="completion-content">
+            <div class="logo-container">
+                <img src="/images/logo.png" alt="Flamboyant Shopping Logo" class="logo">
+                <img id="achievementImage" src="/placeholder.svg" alt="Achievement" class="achievement-badge">
+            </div>
+
+            <h2 id="achievementTitle" class="completion-title">🎉 Conquista!</h2>
+
+            <p id="completionMessage" style="color: #1f2937; margin-bottom: 2rem; font-size: 1.125rem; line-height: 1.75;">
+                <strong style="color: #dc2626;">Parabéns!</strong> Você completou o desafio de segurança da informação do
+                Flamboyant Shopping!
+            </p>
+
+            <!-- Achievement Badge Info -->
+            <div style="background: #fef2f2; border: 2px solid #fca5a5; border-radius: 12px; padding: 1.5rem; margin-bottom: 2rem;">
+                <div style="display: flex; align-items: center; justify-content: center; margin-bottom: 1rem;">
+                    <img id="achievementImageLarge" src="/placeholder.svg" alt="Achievement" style="width: 64px; height: 64px; border-radius: 50%; border: 2px solid #fca5a5; margin-right: 1rem; object-fit: cover;">
+                    <h3 id="achievementName" style="font-weight: bold; font-size: 1.5rem; color: #b91c1c;"></h3>
+                </div>
+                <p id="achievementDescription" style="color: #374151; font-size: 1.125rem; margin-bottom: 1rem;"></p>
+                <div class="stats-grid">
+                    <div class="stat-item">
+                        <div id="gamiPressPoints" class="stat-value">0</div>
+                        <div class="stat-label">Pontos GamiPress</div>
+                    </div>
+                    <div class="stat-item">
+                        <div id="gamePoints" class="stat-value">0</div>
+                        <div class="stat-label">Pontos do Jogo</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="report-section">
+                <h3 class="report-title">📊 Relatório de Performance:</h3>
+                <ul class="report-list">
+                    <li>
+                        <span>📝</span>
+                        Perguntas respondidas: <strong id="questionsAnswered">0/8</strong>
+                    </li>
+                    <li>
+                        <span>✅</span>
+                        Respostas corretas: <strong id="correctAnswers">0</strong>
+                    </li>
+                    <li>
+                        <span>🏆</span>
+                        Taxa de acerto: <strong id="accuracyRate">0%</strong>
+                    </li>
+                    <li>
+                        <span>🎯</span>
+                        Nível alcançado: <strong id="achievementLevel">-</strong>
+                    </li>
+                </ul>
+            </div>
+
+            <!-- Shortcode Display -->
+            <div id="shortcodeDisplay" class="hidden" style="background: #f9fafb; border: 2px solid #d1d5db; border-radius: 12px; padding: 1rem; margin-bottom: 1.5rem;">
+                <h4 style="font-weight: bold; color: #374151; margin-bottom: 0.5rem;">📋 Shortcode WordPress:</h4>
+                <code id="shortcodeText" style="font-size: 0.875rem; background: white; padding: 0.5rem; border-radius: 4px; border: 1px solid #d1d5db; display: block; text-align: left; overflow-x: auto; color: #1f2937;"></code>
+                <p style="font-size: 0.75rem; color: #6b7280; margin-top: 0.5rem;">
+                    Cole este shortcode no WordPress para processar a conquista automaticamente.
+                </p>
+            </div>
+
+            <div style="display: flex; flex-direction: column; gap: 1rem;">
+                <button id="redeemBtn" class="btn btn-primary w-full" style="font-size: 1.25rem; padding: 1.5rem; font-weight: bold;">
+                    🎯 <span id="redeemText">PROCESSAR CONQUISTA</span>
+                </button>
+
+                <div style="display: flex; flex-direction: column; gap: 1rem;">
+                    <button id="playAgainBtn" class="btn" style="font-weight: bold; padding: 0.75rem 1.5rem;">
+                        🔄 Jogar Novamente
+                    </button>
+                    <button id="backHomeBtn" class="btn hidden" style="font-weight: bold; padding: 0.75rem 1.5rem; background: transparent; color: #dc2626;">
+                        🏠 Voltar ao Início
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Game Configuration
+        const gameConfig = {
+            companyName: "Flamboyant Shopping",
+            finishButtonText: "RESGATE SEUS PONTOS!",
+            enableGamiPressTracking: true,
+            gamiPressWebhookUrl: "https://v0-escape-room-game-development.vercel.app/wp-json/gamipress/v1/achievements/award"
+        };
+
+        // Achievement Levels
+        const achievementLevels = {
+            ciber_aprendiz_badge: {
+                id: "ciber_aprendiz_badge",
+                name: "Ciber Aprendiz",
+                description: "Demonstra interesse inicial em segurança da informação",
+                minPercentage: 0,
+                maxPercentage: 25,
+                points: 50,
+                color: "#DC2626",
+                image: "/images/achievements/ciber-aprendiz.png",
+                shortcode: "[gamipress_award_achievement id='ciber_aprendiz' user_id='USER_ID' points='50']"
+            },
+            ciber_vigilante_badge: {
+                id: "ciber_vigilante_badge",
+                name: "Ciber Vigilante",
+                description: "Conhecimento básico em práticas de segurança",
+                minPercentage: 26,
+                maxPercentage: 50,
+                points: 100,
+                color: "#B91C1C",
+                image: "/images/achievements/ciber-vigilante.png",
+                shortcode: "[gamipress_award_achievement id='ciber_vigilante' user_id='USER_ID' points='100']"
+            },
+            ciber_guardiao_badge: {
+                id: "ciber_guardiao_badge",
+                name: "Ciber Guardião",
+                description: "Excelente domínio em segurança digital",
+                minPercentage: 51,
+                maxPercentage: 75,
+                points: 150,
+                color: "#991B1B",
+                image: "/images/achievements/ciber-guardiao.png",
+                shortcode: "[gamipress_award_achievement id='ciber_guardiao' user_id='USER_ID' points='150']"
+            },
+            ciber_embaixador_flamboyant_badge: {
+                id: "ciber_embaixador_flamboyant_badge",
+                name: "Ciber Embaixador Flamboyant",
+                description: "Domínio excepcional em segurança da informação",
+                minPercentage: 76,
+                maxPercentage: 100,
+                points: 200,
+                color: "#7F1D1D",
+                image: "/images/achievements/ciber-embaixador.png",
+                shortcode: "[gamipress_award_achievement id='ciber_embaixador_flamboyant' user_id='USER_ID' points='200']"
+            }
+        };
+
+        // Questions
+        const questions = [
+            {
+                id: 1,
+                text: "Você recebe um e-mail de um fornecedor pedindo para 'atualizar' a planilha de clientes anexada. O que você deve fazer primeiro?",
+                options: [
+                    { text: "Abrir rapidamente, verificar e reenviar.", correct: false },
+                    { text: "Confirmar a legitimidade do pedido com o fornecedor por outro canal.", correct: true },
+                    { text: "Ignorar, pois não é responsabilidade do meu departamento.", correct: false },
+                    { text: "Encaminhar para o supervisor decidir.", correct: false },
+                    { text: "Verificar apenas o remetente do e-mail.", correct: false }
+                ],
+                points: 25,
+                timeLimit: 15,
+                explanation: "Sempre verifique a legitimidade de solicitações que envolvem dados sensíveis através de um canal alternativo antes de tomar qualquer ação."
+            },
+            {
+                id: 2,
+                text: "Ao notar um pen-drive desconhecido conectado a um computador interno, qual procedimento está correto?",
+                options: [
+                    { text: "Retirar o pen-drive, armazená-lo em local seguro e reportar imediatamente.", correct: true },
+                    { text: "Explorar o conteúdo para identificar o dono.", correct: false },
+                    { text: "Formatar o pen-drive antes de devolvê-lo.", correct: false },
+                    { text: "Deixar conectado e avisar por e-mail.", correct: false }
+                ],
+                points: 25,
+                timeLimit: 12,
+                explanation: "Dispositivos desconhecidos podem conter malware. O procedimento correto é isolá-los e reportar o incidente sem explorar seu conteúdo."
+            },
+            {
+                id: 3,
+                text: "Um colega comenta no grupo de WhatsApp sobre um vazamento envolvendo dados de clientes. Qual é a melhor atitude?",
+                options: [
+                    { text: "Compartilhar mais detalhes para esclarecer a história.", correct: false },
+                    { text: "Alertar o Comitê de Privacidade e usar o canal oficial para reportar o incidente.", correct: true },
+                    { text: "Ignorar mensagens de rumores até que a mídia confirme.", correct: false },
+                    { text: "Perguntar mais detalhes no grupo.", correct: false },
+                    { text: "Sair do grupo para evitar problemas.", correct: false }
+                ],
+                points: 25,
+                timeLimit: 18,
+                explanation: "Incidentes de segurança devem ser reportados pelos canais oficiais para garantir uma resposta adequada e evitar o compartilhamento indevido de informações sensíveis."
+            },
+            {
+                id: 4,
+                text: "Durante uma reunião online, um colega pede que você compartilhe sua tela mostrando a base de dados de clientes. O que fazer?",
+                options: [
+                    { text: "Compartilhar apenas se for um colega de confiança.", correct: false },
+                    { text: "Verificar se ele tem autorização para acessar esses dados antes de compartilhar.", correct: true },
+                    { text: "Compartilhar a tela, mas ocultar as colunas com CPF e e-mail.", correct: false },
+                    { text: "Compartilhar sem restrições, é uma reunião interna.", correct: false }
+                ],
+                points: 25,
+                timeLimit: 14,
+                explanation: "O acesso a dados pessoais deve ser baseado em necessidade legítima e autorização prévia, independentemente do nível de confiança no colega."
+            },
+            {
+                id: 5,
+                text: "Você percebe que tem acesso a dados de clientes que não são necessários para sua função. O que deve fazer?",
+                options: [
+                    { text: "Manter o acesso, pois pode ser útil no futuro.", correct: false },
+                    { text: "Solicitar a remoção do seu acesso a esses dados desnecessários.", correct: true },
+                    { text: "Não fazer nada, já que você não utiliza esses dados.", correct: false },
+                    { text: "Usar os dados apenas em emergências.", correct: false },
+                    { text: "Compartilhar com colegas que precisam.", correct: false }
+                ],
+                points: 25,
+                timeLimit: 16,
+                explanation: "O princípio do privilégio mínimo determina que cada pessoa deve ter acesso apenas aos dados necessários para sua função, reduzindo riscos de vazamentos."
+            },
+            {
+                id: 6,
+                text: "Qual é a melhor prática para criar senhas seguras?",
+                options: [
+                    { text: "Usar o nome da empresa + ano atual.", correct: false },
+                    { text: "Combinar letras maiúsculas, minúsculas, números e símbolos.", correct: true },
+                    { text: "Usar a mesma senha para todos os sistemas.", correct: false },
+                    { text: "Usar apenas números da data de nascimento.", correct: false }
+                ],
+                points: 25,
+                timeLimit: 10,
+                explanation: "Senhas seguras devem combinar diferentes tipos de caracteres e ser únicas para cada sistema."
+            },
+            {
+                id: 7,
+                text: "Como você deve proceder ao receber um link suspeito por e-mail?",
+                options: [
+                    { text: "Clicar para verificar se é seguro.", correct: false },
+                    { text: "Não clicar e verificar a legitimidade do remetente.", correct: true },
+                    { text: "Encaminhar para colegas opinarem.", correct: false },
+                    { text: "Clicar apenas se conhecer o remetente.", correct: false },
+                    { text: "Salvar o link para verificar depois.", correct: false }
+                ],
+                points: 25,
+                timeLimit: 13,
+                explanation: "Links suspeitos nunca devem ser clicados. Sempre verifique a legitimidade através de canais seguros."
+            },
+            {
+                id: 8,
+                text: "Qual é o procedimento correto para descarte de documentos com dados pessoais?",
+                options: [
+                    { text: "Jogar no lixo comum.", correct: false },
+                    { text: "Fragmentar ou destruir completamente antes do descarte.", correct: true },
+                    { text: "Riscar os dados principais apenas.", correct: false },
+                    { text: "Guardar em arquivo morto.", correct: false }
+                ],
+                points: 25,
+                timeLimit: 11,
+                explanation: "Documentos com dados pessoais devem ser completamente destruídos para evitar recuperação indevida."
+            }
+        ];
+
+        // Game State
+        let gameState = {
+            currentQuestion: 0,
+            totalPoints: 0,
+            correctAnswers: 0,
+            answeredQuestions: 0,
+            questionTimeLeft: 0,
+            questionTimer: null,
+            userId: null,
+            soundEnabled: true,
+            musicEnabled: true,
+            isEmbedded: false,
+            hasPlayedWarning: false
+        };
+
+        // Audio Context
+        let audioContext = null;
+        let backgroundMusic = null;
+
+        // DOM Elements
+        const elements = {
+            introScreen: document.getElementById('introScreen'),
+            progressContainer: document.getElementById('progressContainer'),
+            questionScreen: document.getElementById('questionScreen'),
+            feedbackModal: document.getElementById('feedbackModal'),
+            completionScreen: document.getElementById('completionScreen'),
+            startGameBtn: document.getElementById('startGameBtn'),
+            musicBtn: document.getElementById('musicBtn'),
+            soundBtn: document.getElementById('soundBtn'),
+            exitBtn: document.getElementById('exitBtn'),
+            pointsDisplay: document.getElementById('pointsDisplay'),
+            progressText: document.getElementById('progressText'),
+            progressFill: document.getElementById('progressFill'),
+            questionNumber: document.getElementById('questionNumber'),
+            questionNumberText: document.getElementById('questionNumberText'),
+            timer: document.getElementById('timer'),
+            timerText: document.getElementById('timerText'),
+            questionText: document.getElementById('questionText'),
+            optionsContainer: document.getElementById('optionsContainer'),
+            feedbackTitle: document.getElementById('feedbackTitle'),
+            feedbackText: document.getElementById('feedbackText'),
+            pointsEarned: document.getElementById('pointsEarned'),
+            continueBtn: document.getElementById('continueBtn'),
+            continueText: document.getElementById('continueText'),
+            achievementImage: document.getElementById('achievementImage'),
+            achievementImageLarge: document.getElementById('achievementImageLarge'),
+            achievementTitle: document.getElementById('achievementTitle'),
+            achievementName: document.getElementById('achievementName'),
+            achievementDescription: document.getElementById('achievementDescription'),
+            completionMessage: document.getElementById('completionMessage'),
+            gamiPressPoints: document.getElementById('gamiPressPoints'),
+            gamePoints: document.getElementById('gamePoints'),
+            questionsAnswered: document.getElementById('questionsAnswered'),
+            correctAnswersDisplay: document.getElementById('correctAnswers'),
+            accuracyRate: document.getElementById('accuracyRate'),
+            achievementLevel: document.getElementById('achievementLevel'),
+            shortcodeDisplay: document.getElementById('shortcodeDisplay'),
+            shortcodeText: document.getElementById('shortcodeText'),
+            redeemBtn: document.getElementById('redeemBtn'),
+            redeemText: document.getElementById('redeemText'),
+            playAgainBtn: document.getElementById('playAgainBtn'),
+            backHomeBtn: document.getElementById('backHomeBtn')
+        };
+
+        // Initialize
+        function init() {
+            // Check if embedded
+            gameState.isEmbedded = window.self !== window.top;
+            
+            // Get user ID from URL
+            const params = new URLSearchParams(window.location.search);
+            gameState.userId = params.get('user_id');
+
+            // Show/hide exit button based on embedded mode
+            if (!gameState.isEmbedded) {
+                elements.exitBtn.style.display = 'block';
+                elements.backHomeBtn.classList.remove('hidden');
+            }
+
+            // Initialize audio
+            initAudio();
+
+            // Event listeners
+            setupEventListeners();
+        }
+
+        function initAudio() {
+            try {
+                audioContext = new (window.AudioContext || window.webkitAudioContext)();
+            } catch (e) {
+                console.log('Audio not supported');
+            }
+        }
+
+        function setupEventListeners() {
+            elements.startGameBtn.addEventListener('click', startGame);
+            elements.musicBtn.addEventListener('click', toggleMusic);
+            elements.soundBtn.addEventListener('click', toggleSound);
+            elements.continueBtn.addEventListener('click', handleContinue);
+            elements.redeemBtn.addEventListener('click', handleRedeemPoints);
+            elements.playAgainBtn.addEventListener('click', () => window.location.reload());
+            elements.exitBtn.addEventListener('click', () => window.history.back());
+            elements.backHomeBtn.addEventListener('click', () => window.history.back());
+        }
+
+        function createBeep(frequency, duration, type = 'sine') {
+            if (!audioContext || !gameState.soundEnabled) return;
+            
+            const oscillator = audioContext.createOscillator();
+            const gainNode = audioContext.createGain();
+
+            oscillator.connect(gainNode);
+            gainNode.connect(audioContext.destination);
+
+            oscillator.frequency.value = frequency;
+            oscillator.type = type;
+
+            gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
+            gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + duration);
+
+            oscillator.start(audioContext.currentTime);
+            oscillator.stop(audioContext.currentTime + duration);
+        }
+
+        function playCorrectSound() {
+            createBeep(800, 0.2);
+            setTimeout(() => createBeep(1000, 0.2), 100);
+        }
+
+        function playIncorrectSound() {
+            createBeep(300, 0.5, 'sawtooth');
+        }
+
+        function playWarningSound() {
+            createBeep(600, 0.1);
+        }
+
+        function playTimeUpSound() {
+            createBeep(200, 1, 'square');
+        }
+
+        function playTickSound() {
+            createBeep(400, 0.05);
+        }
+
+        function startBackgroundMusic() {
+            if (!audioContext || !gameState.musicEnabled || backgroundMusic) return;
+
+            const oscillators = [];
+            const gainNodes = [];
+
+            // Root note - C3
+            const rootOsc = audioContext.createOscillator();
+            const rootGain = audioContext.createGain();
+            rootOsc.connect(rootGain);
+            rootGain.connect(audioContext.destination);
+            rootOsc.frequency.setValueAtTime(130.81, audioContext.currentTime);
+            rootOsc.type = 'sine';
+            rootGain.gain.setValueAtTime(0.025, audioContext.currentTime);
+
+            // Fifth - G3
+            const fifthOsc = audioContext.createOscillator();
+            const fifthGain = audioContext.createGain();
+            fifthOsc.connect(fifthGain);
+            fifthGain.connect(audioContext.destination);
+            fifthOsc.frequency.setValueAtTime(196, audioContext.currentTime);
+            fifthOsc.type = 'sine';
+            fifthGain.gain.setValueAtTime(0.018, audioContext.currentTime);
+
+            // Octave - C4
+            const octaveOsc = audioContext.createOscillator();
+            const octaveGain = audioContext.createGain();
+            octaveOsc.connect(octaveGain);
+            octaveGain.connect(audioContext.destination);
+            octaveOsc.frequency.setValueAtTime(261.63, audioContext.currentTime);
+            octaveOsc.type = 'triangle';
+            octaveGain.gain.setValueAtTime(0.012, audioContext.currentTime);
+
+            // LFO
+            const lfo = audioContext.createOscillator();
+            const lfoGain = audioContext.createGain();
+            lfo.connect(lfoGain);
+            lfoGain.connect(rootGain.gain);
+            lfo.frequency.setValueAtTime(0.08, audioContext.currentTime);
+            lfo.type = 'sine';
+            lfoGain.gain.setValueAtTime(0.008, audioContext.currentTime);
+
+            oscillators.push(rootOsc, fifthOsc, octaveOsc, lfo);
+            gainNodes.push(rootGain, fifthGain, octaveGain, lfoGain);
+
+            oscillators.forEach(osc => osc.start(audioContext.currentTime));
+
+            backgroundMusic = {
+                oscillators,
+                gainNodes,
+                stop: () => {
+                    oscillators.forEach(osc => {
+                        try {
+                            osc.stop();
+                        } catch (e) {
+                            // Already stopped
+                        }
+                    });
+                }
+            };
+        }
+
+        function stopBackgroundMusic() {
+            if (backgroundMusic) {
+                backgroundMusic.stop();
+                backgroundMusic = null;
+            }
+        }
+
+        function toggleMusic() {
+            gameState.musicEnabled = !gameState.musicEnabled;
+            const icon = elements.musicBtn.querySelector('span');
+            
+            if (gameState.musicEnabled) {
+                icon.className = 'icon-music';
+                if (!elements.introScreen.classList.contains('hidden')) {
+                    // Don't start music during intro
+                } else {
+                    startBackgroundMusic();
+                }
+            } else {
+                icon.className = 'icon-volume-off';
+                stopBackgroundMusic();
+            }
+        }
+
+        function toggleSound() {
+            gameState.soundEnabled = !gameState.soundEnabled;
+            const icon = elements.soundBtn.querySelector('span');
+            icon.className = gameState.soundEnabled ? 'icon-volume' : 'icon-volume-off';
+        }
+
+        function startGame() {
+            elements.introScreen.classList.add('hidden');
+            elements.progressContainer.classList.remove('hidden');
+            elements.questionScreen.classList.remove('hidden');
+            
+            startBackgroundMusic();
+            showQuestion();
+        }
+
+        function showQuestion() {
+            const question = questions[gameState.currentQuestion];
+            
+            // Update progress
+            const progress = ((gameState.currentQuestion + 1) / questions.length) * 100;
+            elements.progressFill.style.width = progress + '%';
+            elements.progressText.textContent = `${gameState.currentQuestion + 1} de ${questions.length}`;
+            
+            // Update question display
+            elements.questionNumber.textContent = gameState.currentQuestion + 1;
+            elements.questionNumberText.textContent = gameState.currentQuestion + 1;
+            elements.questionText.textContent = question.text;
+            
+            // Clear and populate options
+            elements.optionsContainer.innerHTML = '';
+            question.options.forEach((option, index) => {
+                const button = document.createElement('button');
+                button.className = 'option';
+                button.innerHTML = `
+                    <span class="option-letter">${String.fromCharCode(65 + index)}</span>
+                    <span>${option.text}</span>
+                `;
+                button.addEventListener('click', () => handleOptionClick(option.correct, question.points));
+                elements.optionsContainer.appendChild(button);
+            });
+            
+            // Start timer
+            startQuestionTimer();
+        }
+
+        function startQuestionTimer() {
+            const timeLimit = questions[gameState.currentQuestion].timeLimit;
+            gameState.questionTimeLeft = timeLimit;
+            gameState.hasPlayedWarning = false;
+            
+            updateTimerDisplay();
+            
+            gameState.questionTimer = setInterval(() => {
+                gameState.questionTimeLeft--;
+                updateTimerDisplay();
+                
+                // Play warning sound at 5 seconds
+                if (gameState.questionTimeLeft === 5 && !gameState.hasPlayedWarning) {
+                    playWarningSound();
+                    gameState.hasPlayedWarning = true;
+                }
+                
+                // Play tick sound for last 3 seconds
+                if (gameState.questionTimeLeft <= 3 && gameState.questionTimeLeft > 0) {
+                    playTickSound();
+                }
+                
+                if (gameState.questionTimeLeft <= 0) {
+                    clearInterval(gameState.questionTimer);
+                    handleTimeUp();
+                }
+            }, 1000);
+        }
+
+        function updateTimerDisplay() {
+            elements.timerText.textContent = gameState.questionTimeLeft + 's';
+            
+            // Update timer style
+            elements.timer.className = 'timer';
+            if (gameState.questionTimeLeft <= 3) {
+                elements.timer.classList.add('danger');
+            } else if (gameState.questionTimeLeft <= 7) {
+                elements.timer.classList.add('warning');
+            } else {
+                elements.timer.classList.add('safe');
+            }
+        }
+
+        function clearQuestionTimer() {
+            if (gameState.questionTimer) {
+                clearInterval(gameState.questionTimer);
+                gameState.questionTimer = null;
+            }
+        }
+
+        function handleOptionClick(isCorrect, points) {
+            clearQuestionTimer();
+            
+            // Disable all options
+            const options = elements.optionsContainer.querySelectorAll('.option');
+            options.forEach(option => option.disabled = true);
+            
+            if (isCorrect) {
+                playCorrectSound();
+                gameState.totalPoints += points;
+                gameState.correctAnswers++;
+                showFeedback(true, points, questions[gameState.currentQuestion].explanation);
+            } else {
+                playIncorrectSound();
+                showFeedback(false, 0, "Resposta incorreta, mas você pode continuar! " + questions[gameState.currentQuestion].explanation);
+            }
+            
+            gameState.answeredQuestions++;
+            updatePointsDisplay();
+        }
+
+        function handleTimeUp() {
+            playTimeUpSound();
+            
+            // Disable all options
+            const options = elements.optionsContainer.querySelectorAll('.option');
+            options.forEach(option => option.disabled = true);
+            
+            showFeedback(false, 0, "Tempo esgotado! " + questions[gameState.currentQuestion].explanation);
+            gameState.answeredQuestions++;
+        }
+
+        function showFeedback(isCorrect, points, explanation) {
+            // Update feedback content
+            if (isCorrect) {
+                elements.feedbackTitle.innerHTML = '<span class="icon-check"></span> ✅ Resposta Correta!';
+                elements.feedbackTitle.style.color = '#059669';
+                elements.pointsEarned.classList.remove('hidden');
+            } else if (gameState.questionTimeLeft === 0) {
+                elements.feedbackTitle.innerHTML = '<span class="icon-timer"></span> ⏰ Tempo Esgotado!';
+                elements.feedbackTitle.style.color = '#dc2626';
+                elements.pointsEarned.classList.add('hidden');
+            } else {
+                elements.feedbackTitle.innerHTML = '<span class="icon-warning"></span> ⚠️ Resposta Incorreta';
+                elements.feedbackTitle.style.color = '#d97706';
+                elements.pointsEarned.classList.add('hidden');
+            }
+            
+            elements.feedbackText.textContent = explanation;
+            
+            // Update continue button text
+            if (gameState.currentQuestion < questions.length - 1) {
+                elements.continueText.textContent = 'Próxima Pergunta';
+            } else {
+                elements.continueText.textContent = 'Ver Resultado';
+            }
+            
+            elements.feedbackModal.classList.remove('hidden');
+        }
+
+        function handleContinue() {
+            elements.feedbackModal.classList.add('hidden');
+            
+            if (gameState.currentQuestion < questions.length - 1) {
+                gameState.currentQuestion++;
+                showQuestion();
+            } else {
+                stopBackgroundMusic();
+                showCompletion();
+            }
+        }
+
+        function updatePointsDisplay() {
+            elements.pointsDisplay.textContent = gameState.totalPoints;
+        }
+
+        function getAchievementByPerformance(correctAnswers, totalQuestions) {
+            const percentage = Math.round((correctAnswers / totalQuestions) * 100);
+            
+            if (percentage >= achievementLevels.ciber_embaixador_flamboyant_badge.minPercentage) {
+                return { ...achievementLevels.ciber_embaixador_flamboyant_badge, percentage };
+            } else if (percentage >= achievementLevels.ciber_guardiao_badge.minPercentage) {
+                return { ...achievementLevels.ciber_guardiao_badge, percentage };
+            } else if (percentage >= achievementLevels.ciber_vigilante_badge.minPercentage) {
+                return { ...achievementLevels.ciber_vigilante_badge, percentage };
+            } else {
+                return { ...achievementLevels.ciber_aprendiz_badge, percentage };
+            }
+        }
+
+        function showCompletion() {
+            const achievement = getAchievementByPerformance(gameState.correctAnswers, questions.length);
+            
+            // Hide game screens
+            elements.progressContainer.classList.add('hidden');
+            elements.questionScreen.classList.add('hidden');
+            
+            // Update completion screen
+            elements.achievementImage.src = achievement.image;
+            elements.achievementImageLarge.src = achievement.image;
+            elements.achievementTitle.textContent = `🎉 ${achievement.name}!`;
+            elements.achievementName.textContent = achievement.name;
+            elements.achievementDescription.textContent = achievement.description;
+            elements.completionMessage.innerHTML = `
+                <strong style="color: #dc2626;">Parabéns!</strong> Você completou o desafio de segurança da informação do
+                ${gameConfig.companyName} com <strong style="color: #dc2626;">${achievement.percentage}% de acerto</strong>!
+            `;
+            
+            // Update stats
+            elements.gamiPressPoints.textContent = achievement.points;
+            elements.gamePoints.textContent = gameState.totalPoints;
+            elements.questionsAnswered.textContent = `${gameState.answeredQuestions}/${questions.length}`;
+            elements.correctAnswersDisplay.textContent = gameState.correctAnswers;
+            elements.accuracyRate.textContent = `${achievement.percentage}%`;
+            elements.achievementLevel.textContent = achievement.name;
+            
+            // Update shortcode
+            const shortcode = achievement.shortcode.replace('USER_ID', gameState.userId || 'current_user');
+            elements.shortcodeText.textContent = shortcode;
+            
+            // Show/hide shortcode based on embedded mode
+            if (gameState.isEmbedded) {
+                elements.shortcodeDisplay.classList.add('hidden');
+                elements.redeemText.textContent = 'PROCESSAR CONQUISTA';
+            } else {
+                elements.shortcodeDisplay.classList.remove('hidden');
+                elements.redeemText.textContent = 'COPIAR SHORTCODE';
+            }
+            
+            elements.completionScreen.classList.remove('hidden');
+        }
+
+        function sendToParent(data) {
+            if (gameState.isEmbedded && window.parent) {
+                window.parent.postMessage({
+                    type: 'ESCAPE_ROOM_COMPLETE',
+                    data: data
+                }, '*');
+            }
+        }
+
+        function handleRedeemPoints() {
+            const achievement = getAchievementByPerformance(gameState.correctAnswers, questions.length);
+
+            const gameData = {
+                completed: true,
+                points: gameState.totalPoints,
+                questions_answered: gameState.answeredQuestions,
+                total_questions: questions.length,
+                correct_answers: gameState.correctAnswers,
+                percentage: achievement.percentage,
+                achievement_id: achievement.id,
+                achievement_name: achievement.name,
+                gamipress_points: achievement.points,
+                shortcode: achievement.shortcode.replace('USER_ID', gameState.userId || 'current_user'),
+                user_id: gameState.userId || null,
+                timestamp: new Date().toISOString()
+            };
+
+            // If embedded, send data to parent window
+            if (gameState.isEmbedded) {
+                sendToParent(gameData);
+                alert(`Parabéns! Você conquistou: ${achievement.name}\nPontos: ${achievement.points}\nO shortcode foi enviado para processamento.`);
+            } else {
+                // If not embedded, copy shortcode to clipboard
+                const shortcodeText = achievement.shortcode.replace('USER_ID', gameState.userId || 'current_user');
+                
+                // Try to copy to clipboard
+                if (navigator.clipboard) {
+                    navigator.clipboard.writeText(shortcodeText).then(() => {
+                        alert(`Parabéns! Você conquistou: ${achievement.name}\n\nShortcode copiado para a área de transferência:\n${shortcodeText}\n\nCole este shortcode no WordPress para processar a conquista.`);
+                    }).catch(() => {
+                        // Fallback for older browsers
+                        prompt('Shortcode para copiar:', shortcodeText);
+                    });
+                } else {
+                    // Fallback for older browsers
+                    prompt('Shortcode para copiar:', shortcodeText);
+                }
+            }
+
+            // Track completion with GamiPress if enabled
+            if (gameConfig.enableGamiPressTracking && gameConfig.gamiPressWebhookUrl) {
+                fetch(gameConfig.gamiPressWebhookUrl, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(gameData)
+                })
+                .then(response => response.json())
+                .then(data => {
+                    console.log('GamiPress tracking successful:', data);
+                })
+                .catch(error => {
+                    console.error('GamiPress tracking failed:', error);
+                });
+            }
+        }
+
+        // Initialize the game when page loads
+        document.addEventListener('DOMContentLoaded', init);
+    </script>
+</body>
+</html>

@@ -1,0 +1,923 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Escape Room - Vazamento de Dados</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+            background: linear-gradient(135deg, #7f1d1d, #991b1b, #dc2626);
+            min-height: 100vh;
+            color: white;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 1rem;
+        }
+
+        /* Header Styles */
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: rgba(0, 0, 0, 0.4);
+            backdrop-filter: blur(8px);
+            padding: 1.5rem;
+            border-radius: 12px;
+            margin-bottom: 1.5rem;
+            border: 1px solid rgba(220, 38, 38, 0.3);
+        }
+
+        .header h1 {
+            font-size: 1.25rem;
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .header-controls {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .btn {
+            padding: 0.5rem 1rem;
+            border: 2px solid #dc2626;
+            background: rgba(220, 38, 38, 0.2);
+            color: white;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.2s;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .btn:hover {
+            background: rgba(220, 38, 38, 0.4);
+            transform: translateY(-2px);
+        }
+
+        .btn-primary {
+            background: #dc2626;
+            border-color: #dc2626;
+        }
+
+        .btn-primary:hover {
+            background: #b91c1c;
+        }
+
+        .btn-icon {
+            padding: 0.5rem;
+            min-width: 40px;
+            justify-content: center;
+        }
+
+        .points-display {
+            background: rgba(234, 179, 8, 0.2);
+            border: 1px solid #eab308;
+            padding: 0.5rem 1rem;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        /* Card Styles */
+        .card {
+            background: white;
+            color: #1f2937;
+            border-radius: 16px;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+            border: 4px solid #dc2626;
+            overflow: hidden;
+        }
+
+        .card-header {
+            background: #dc2626;
+            color: white;
+            padding: 2rem;
+            text-align: center;
+        }
+
+        .card-title {
+            font-size: 2rem;
+            font-weight: bold;
+            margin-bottom: 0.5rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.75rem;
+        }
+
+        .card-description {
+            color: #fecaca;
+            font-size: 1.125rem;
+            font-weight: 500;
+        }
+
+        .card-content {
+            padding: 2rem;
+        }
+
+        .card-footer {
+            padding: 2rem;
+        }
+
+        /* Progress Bar */
+        .progress-container {
+            background: rgba(0, 0, 0, 0.4);
+            backdrop-filter: blur(8px);
+            padding: 1rem;
+            border-radius: 12px;
+            margin-bottom: 1.5rem;
+            border: 1px solid rgba(220, 38, 38, 0.3);
+        }
+
+        .progress-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 0.75rem;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 12px;
+            background: #374151;
+            border-radius: 6px;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(to right, #ef4444, #f87171);
+            border-radius: 6px;
+            transition: width 0.5s ease-out;
+        }
+
+        /* Question Styles */
+        .question-header {
+            background: #dc2626;
+            color: white;
+            padding: 1.5rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+        }
+
+        .question-info {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .question-number {
+            background: white;
+            color: #dc2626;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 1.125rem;
+        }
+
+        .timer {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.5rem 1rem;
+            border-radius: 8px;
+            border: 2px solid;
+            font-weight: bold;
+            font-family: monospace;
+            font-size: 1.5rem;
+        }
+
+        .timer.warning {
+            background: #fef3c7;
+            border-color: #f59e0b;
+            color: #d97706;
+        }
+
+        .timer.danger {
+            background: #fef2f2;
+            border-color: #ef4444;
+            color: #dc2626;
+            animation: pulse 1s infinite;
+        }
+
+        .timer.safe {
+            background: #f0fdf4;
+            border-color: #10b981;
+            color: #059669;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        .question-text {
+            background: #fef2f2;
+            padding: 1.5rem;
+            border-radius: 12px;
+            border-left: 4px solid #ef4444;
+            margin-bottom: 1.5rem;
+        }
+
+        .question-text p {
+            font-size: 1.25rem;
+            line-height: 1.75;
+            font-weight: 600;
+            color: #1f2937;
+        }
+
+        /* Options */
+        .options {
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+        }
+
+        .option {
+            width: 100%;
+            padding: 1.5rem;
+            border: 2px solid #fca5a5;
+            background: white;
+            color: #1f2937;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            text-align: left;
+            font-size: 1rem;
+            font-weight: 500;
+            line-height: 1.5;
+        }
+
+        .option:hover {
+            border-color: #ef4444;
+            background: #fef2f2;
+            color: #b91c1c;
+        }
+
+        .option:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .option-letter {
+            background: #dc2626;
+            color: white;
+            border-radius: 50%;
+            width: 32px;
+            height: 32px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 1rem;
+            font-weight: bold;
+            font-size: 1.125rem;
+            transition: background-color 0.2s;
+        }
+
+        .option:hover .option-letter {
+            background: #b91c1c;
+        }
+
+        /* Achievement Levels */
+        .achievement-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 1rem;
+            margin: 1.5rem 0;
+        }
+
+        .achievement-item {
+            display: flex;
+            align-items: center;
+            padding: 1rem;
+            border-radius: 8px;
+            border: 2px solid;
+            background: white;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .achievement-image {
+            width: 48px;
+            height: 48px;
+            border-radius: 50%;
+            border: 2px solid #d1d5db;
+            margin-right: 0.75rem;
+            object-fit: cover;
+        }
+
+        .achievement-info h4 {
+            font-weight: bold;
+            font-size: 1.125rem;
+            color: #1f2937;
+        }
+
+        .achievement-info p {
+            font-size: 0.875rem;
+            color: #6b7280;
+        }
+
+        .achievement-points {
+            font-size: 0.875rem;
+            color: #dc2626;
+            font-weight: 600;
+        }
+
+        /* Modal/Dialog */
+        .modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            padding: 1rem;
+        }
+
+        .modal.hidden {
+            display: none;
+        }
+
+        .modal-content {
+            background: white;
+            border-radius: 16px;
+            border: 4px solid #dc2626;
+            max-width: 600px;
+            width: 100%;
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+
+        .modal-header {
+            padding: 1.5rem;
+            border-bottom: 1px solid #e5e7eb;
+        }
+
+        .modal-title {
+            font-size: 1.5rem;
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            color: #1f2937;
+        }
+
+        .modal-body {
+            padding: 1.5rem;
+        }
+
+        .modal-footer {
+            padding: 1.5rem;
+            border-top: 1px solid #e5e7eb;
+            display: flex;
+            justify-content: flex-end;
+        }
+
+        /* Completion Screen */
+        .completion-screen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.95);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            padding: 1rem;
+        }
+
+        .completion-content {
+            background: white;
+            border-radius: 16px;
+            border: 4px solid #dc2626;
+            max-width: 500px;
+            width: 100%;
+            padding: 2rem;
+            text-align: center;
+            color: #1f2937;
+        }
+
+        .logo-container {
+            position: relative;
+            margin-bottom: 2rem;
+        }
+
+        .logo {
+            width: 120px;
+            height: 120px;
+            border-radius: 50%;
+            object-fit: cover;
+            margin: 0 auto;
+            display: block;
+        }
+
+        .achievement-badge {
+            position: absolute;
+            top: -24px;
+            right: -24px;
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            border: 4px solid white;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+            object-fit: cover;
+        }
+
+        .completion-title {
+            font-size: 2.5rem;
+            font-weight: bold;
+            margin-bottom: 1.5rem;
+            color: #dc2626;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 2rem;
+            margin: 2rem 0;
+        }
+
+        .stat-item {
+            text-align: center;
+        }
+
+        .stat-value {
+            font-size: 2rem;
+            font-weight: bold;
+            color: #dc2626;
+        }
+
+        .stat-label {
+            font-size: 0.875rem;
+            color: #6b7280;
+        }
+
+        .report-section {
+            background: #f0f9ff;
+            border: 2px solid #0ea5e9;
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin: 1.5rem 0;
+            text-align: left;
+        }
+
+        .report-title {
+            font-weight: bold;
+            color: #0c4a6e;
+            margin-bottom: 1rem;
+            font-size: 1.25rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .report-list {
+            list-style: none;
+            padding: 0;
+        }
+
+        .report-list li {
+            display: flex;
+            align-items: center;
+            margin-bottom: 0.75rem;
+            color: #374151;
+            font-size: 1.125rem;
+        }
+
+        .report-list li span:first-child {
+            margin-right: 0.75rem;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .header {
+                flex-direction: column;
+                gap: 1rem;
+            }
+
+            .header h1 {
+                font-size: 1rem;
+            }
+
+            .question-header {
+                flex-direction: column;
+                gap: 1rem;
+                align-items: center;
+            }
+
+            .question-text p {
+                font-size: 1.125rem;
+            }
+
+            .option {
+                padding: 1rem;
+                font-size: 0.875rem;
+            }
+
+            .stats-grid {
+                grid-template-columns: 1fr;
+                gap: 1rem;
+            }
+
+            .achievement-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* Utility Classes */
+        .hidden {
+            display: none !important;
+        }
+
+        .text-center {
+            text-align: center;
+        }
+
+        .mb-4 {
+            margin-bottom: 1rem;
+        }
+
+        .mb-6 {
+            margin-bottom: 1.5rem;
+        }
+
+        .mb-8 {
+            margin-bottom: 2rem;
+        }
+
+        .mt-4 {
+            margin-top: 1rem;
+        }
+
+        .mt-6 {
+            margin-top: 1.5rem;
+        }
+
+        .flex {
+            display: flex;
+        }
+
+        .items-center {
+            align-items: center;
+        }
+
+        .justify-center {
+            justify-content: center;
+        }
+
+        .gap-4 {
+            gap: 1rem;
+        }
+
+        .w-full {
+            width: 100%;
+        }
+
+        /* Icons (using Unicode) */
+        .icon-star::before { content: "⭐"; }
+        .icon-music::before { content: "🎵"; }
+        .icon-volume::before { content: "🔊"; }
+        .icon-volume-off::before { content: "🔇"; }
+        .icon-timer::before { content: "⏱️"; }
+        .icon-check::before { content: "✅"; }
+        .icon-x::before { content: "❌"; }
+        .icon-warning::before { content: "⚠️"; }
+        .icon-trophy::before { content: "🏆"; }
+    </style>
+</head>
+<body>
+    <!-- Game content will be loaded here via JavaScript -->
+    <div id="gameContainer"></div>
+
+    <script>
+        // This file will contain the same JavaScript from the previous vanilla version
+        // but will be loaded as part of the plugin structure
+        
+        // Initialize the game when the page loads
+        document.addEventListener('DOMContentLoaded', function() {
+            // Load the game HTML structure
+            loadGameHTML();
+            // Initialize the game logic
+            initializeGame();
+        });
+
+        function loadGameHTML() {
+            const container = document.getElementById('gameContainer');
+            container.innerHTML = `
+                <div class="container">
+                    <!-- Header -->
+                    <div class="header">
+                        <div>
+                            <button id="exitBtn" class="btn" style="display: none;">← Sair</button>
+                        </div>
+                        <h1>
+                            <img src="../assets/images/logo.png" alt="Logo" width="40" height="40" style="border-radius: 50%;">
+                            Desafio de Segurança - Vazamento de Dados
+                        </h1>
+                        <div class="header-controls">
+                            <button id="musicBtn" class="btn btn-icon" title="Música">
+                                <span class="icon-music"></span>
+                            </button>
+                            <button id="soundBtn" class="btn btn-icon" title="Som">
+                                <span class="icon-volume"></span>
+                            </button>
+                            <div class="points-display">
+                                <span class="icon-star"></span>
+                                <span id="pointsDisplay">0</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Intro Screen -->
+                    <div id="introScreen" class="card">
+                        <div class="card-header">
+                            <h2 class="card-title">
+                                <span>⚠️</span>
+                                🚨 Desafio de Segurança
+                            </h2>
+                            <p class="card-description">
+                                Teste seus conhecimentos sobre segurança da informação no Flamboyant Shopping.
+                            </p>
+                        </div>
+                        <div class="card-content">
+                            <p class="text-center mb-6" style="font-size: 1.125rem; line-height: 1.75; font-weight: 500;">
+                                Você enfrentará <strong>8 perguntas</strong> sobre segurança da informação. Cada pergunta tem um tempo
+                                limite para ser respondida e vale pontos pela resposta correta.
+                            </p>
+
+                            <!-- Achievement Levels Preview -->
+                            <div style="background: #fef2f2; padding: 1.5rem; border-radius: 12px; border: 2px solid #fca5a5; margin-top: 1.5rem;">
+                                <h3 style="font-weight: bold; color: #b91c1c; margin-bottom: 1rem; font-size: 1.25rem; text-align: center;">
+                                    🏆 Níveis de Conquista:
+                                </h3>
+                                <div class="achievement-grid">
+                                    <div class="achievement-item" style="border-color: #DC2626;">
+                                        <img src="../assets/images/achievements/ciber-aprendiz.png" alt="Ciber Aprendiz" class="achievement-image">
+                                        <div class="achievement-info">
+                                            <h4>Ciber Aprendiz</h4>
+                                            <p>0%-25% de acerto</p>
+                                            <p class="achievement-points">50 pontos</p>
+                                        </div>
+                                    </div>
+                                    <div class="achievement-item" style="border-color: #B91C1C;">
+                                        <img src="../assets/images/achievements/ciber-vigilante.png" alt="Ciber Vigilante" class="achievement-image">
+                                        <div class="achievement-info">
+                                            <h4>Ciber Vigilante</h4>
+                                            <p>26%-50% de acerto</p>
+                                            <p class="achievement-points">100 pontos</p>
+                                        </div>
+                                    </div>
+                                    <div class="achievement-item" style="border-color: #991B1B;">
+                                        <img src="../assets/images/achievements/ciber-guardiao.png" alt="Ciber Guardião" class="achievement-image">
+                                        <div class="achievement-info">
+                                            <h4>Ciber Guardião</h4>
+                                            <p>51%-75% de acerto</p>
+                                            <p class="achievement-points">150 pontos</p>
+                                        </div>
+                                    </div>
+                                    <div class="achievement-item" style="border-color: #7F1D1D;">
+                                        <img src="../assets/images/achievements/ciber-embaixador.png" alt="Ciber Embaixador Flamboyant" class="achievement-image">
+                                        <div class="achievement-info">
+                                            <h4>Ciber Embaixador Flamboyant</h4>
+                                            <p>76%-100% de acerto</p>
+                                            <p class="achievement-points">200 pontos</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="card-footer">
+                            <button id="startGameBtn" class="btn btn-primary w-full" style="font-size: 1.25rem; padding: 1.5rem;">
+                                🚀 Iniciar Desafio
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Progress Bar -->
+                    <div id="progressContainer" class="progress-container hidden">
+                        <div class="progress-header">
+                            <span style="font-weight: 600;">Progresso do Desafio</span>
+                            <span id="progressText" style="color: #d1d5db; font-size: 0.875rem;">1 de 8</span>
+                        </div>
+                        <div class="progress-bar">
+                            <div id="progressFill" class="progress-fill" style="width: 0%"></div>
+                        </div>
+                    </div>
+
+                    <!-- Question Screen -->
+                    <div id="questionScreen" class="card hidden">
+                        <div class="question-header">
+                            <div class="question-info">
+                                <div id="questionNumber" class="question-number">1</div>
+                                <h2 style="font-size: 1.5rem; font-weight: bold;">Pergunta <span id="questionNumberText">1</span></h2>
+                            </div>
+                            <div id="timer" class="timer safe">
+                                <span class="icon-timer"></span>
+                                <span id="timerText">15s</span>
+                            </div>
+                        </div>
+                        <div class="card-content">
+                            <div class="question-text">
+                                <p id="questionText"></p>
+                            </div>
+                            <div id="optionsContainer" class="options">
+                                <!-- Options will be inserted here -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Feedback Modal -->
+                <div id="feedbackModal" class="modal hidden">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h3 id="feedbackTitle" class="modal-title"></h3>
+                        </div>
+                        <div class="modal-body">
+                            <div id="pointsEarned" class="hidden" style="display: flex; align-items: center; justify-content: center; padding: 1rem; background: #f0fdf4; border-radius: 8px; border: 1px solid #10b981; margin-bottom: 1rem;">
+                                <span style="margin-right: 0.75rem; font-size: 2rem;">⭐</span>
+                                <span style="font-size: 1.5rem; font-weight: bold; color: #059669;">+25 pontos!</span>
+                            </div>
+                            <div style="background: #fef2f2; padding: 1.5rem; border-radius: 12px; border: 1px solid #fca5a5;">
+                                <h4 style="font-size: 1.125rem; font-weight: bold; color: #b91c1c; margin-bottom: 0.75rem;">💡 Explicação:</h4>
+                                <p id="feedbackText" style="color: #374151; font-size: 1.125rem; line-height: 1.75; font-weight: 500;"></p>
+                            </div>
+                        </div>
+                        <div class="modal-footer">
+                            <button id="continueBtn" class="btn btn-primary" style="padding: 1rem 2rem; font-size: 1.125rem; font-weight: bold;">
+                                ➡️ <span id="continueText">Próxima Pergunta</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Completion Screen -->
+                <div id="completionScreen" class="completion-screen hidden">
+                    <div class="completion-content">
+                        <div class="logo-container">
+                            <img src="../assets/images/logo.png" alt="Flamboyant Shopping Logo" class="logo">
+                            <img id="achievementImage" src="/placeholder.svg" alt="Achievement" class="achievement-badge">
+                        </div>
+
+                        <h2 id="achievementTitle" class="completion-title">🎉 Conquista!</h2>
+
+                        <p id="completionMessage" style="color: #1f2937; margin-bottom: 2rem; font-size: 1.125rem; line-height: 1.75;">
+                            <strong style="color: #dc2626;">Parabéns!</strong> Você completou o desafio de segurança da informação do
+                            Flamboyant Shopping!
+                        </p>
+
+                        <!-- Achievement Badge Info -->
+                        <div style="background: #fef2f2; border: 2px solid #fca5a5; border-radius: 12px; padding: 1.5rem; margin-bottom: 2rem;">
+                            <div style="display: flex; align-items: center; justify-content: center; margin-bottom: 1rem;">
+                                <img id="achievementImageLarge" src="/placeholder.svg" alt="Achievement" style="width: 64px; height: 64px; border-radius: 50%; border: 2px solid #fca5a5; margin-right: 1rem; object-fit: cover;">
+                                <h3 id="achievementName" style="font-weight: bold; font-size: 1.5rem; color: #b91c1c;"></h3>
+                            </div>
+                            <p id="achievementDescription" style="color: #374151; font-size: 1.125rem; margin-bottom: 1rem;"></p>
+                            <div class="stats-grid">
+                                <div class="stat-item">
+                                    <div id="gamiPressPoints" class="stat-value">0</div>
+                                    <div class="stat-label">Pontos GamiPress</div>
+                                </div>
+                                <div class="stat-item">
+                                    <div id="gamePoints" class="stat-value">0</div>
+                                    <div class="stat-label">Pontos do Jogo</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="report-section">
+                            <h3 class="report-title">📊 Relatório de Performance:</h3>
+                            <ul class="report-list">
+                                <li>
+                                    <span>📝</span>
+                                    Perguntas respondidas: <strong id="questionsAnswered">0/8</strong>
+                                </li>
+                                <li>
+                                    <span>✅</span>
+                                    Respostas corretas: <strong id="correctAnswers">0</strong>
+                                </li>
+                                <li>
+                                    <span>🏆</span>
+                                    Taxa de acerto: <strong id="accuracyRate">0%</strong>
+                                </li>
+                                <li>
+                                    <span>🎯</span>
+                                    Nível alcançado: <strong id="achievementLevel">-</strong>
+                                </li>
+                            </ul>
+                        </div>
+
+                        <div style="display: flex; flex-direction: column; gap: 1rem;">
+                            <button id="redeemBtn" class="btn btn-primary w-full" style="font-size: 1.25rem; padding: 1.5rem; font-weight: bold;">
+                                🎯 <span id="redeemText">PROCESSAR CONQUISTA</span>
+                            </button>
+
+                            <div style="display: flex; flex-direction: column; gap: 1rem;">
+                                <button id="playAgainBtn" class="btn" style="font-weight: bold; padding: 0.75rem 1.5rem;">
+                                    🔄 Jogar Novamente
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        function initializeGame() {
+            // Include all the game logic from the previous vanilla version here
+            // This would be the same JavaScript code but organized within the plugin structure
+            
+            // Game Configuration
+            const gameConfig = {
+                companyName: "Flamboyant Shopping",
+                finishButtonText: "RESGATE SEUS PONTOS!",
+                enableGamiPressTracking: true,
+                gamiPressWebhookUrl: ""
+            };
+
+            // Achievement Levels
+            const achievementLevels = {
+                ciber_aprendiz_badge: {
+                    id: "ciber_aprendiz_badge",
+                    name: "Ciber Aprendiz",
+                    description: "Demonstra interesse inicial em segurança da informação",
+                    minPercentage: 0,
+                    maxPercentage: 25,
+                    points: 50,
+                    color: "#DC2626",
+                    image: "../assets/images/achievements/ciber-aprendiz.png",
+                    shortcode: "[gamipress_award_achievement id='ciber_aprendiz' user_id='USER_ID' points='50']"
+                },
+                ciber_vigilante_badge: {
+                    id: "ciber_vigilante_badge",
+                    name: "Ciber Vigilante",
+                    description: "Conhecimento básico em práticas de segurança",
+                    minPercentage: 26,
+                    maxPercentage: 50,
+                    points: 100,
+                    color: "#B91C1C",
+                    image: "../assets/images/achievements/ciber-vigilante.png",
+                    shortcode: "[gamipress_award_achievement id='ciber_vigilante' user_id='USER_ID' points='100']"
+                },
+                ciber_guardiao_badge: {
+                    id: "ciber_guardiao_badge",
+                    name: "Ciber Guardião",
+                    description: "Excelente domínio em segurança digital",
+                    minPercentage: 51,
+                    maxPercentage: 75,
+                    points: 150,
+                    color: "#991B1B",
+                    image: "../assets/images/achievements/ciber-guardiao.png",
+                    shortcode: "[gamipress_award_achievement id='ciber_guardiao' user_id='USER_ID' points='150']"
+                },
+                ciber_embaixador_flamboyant_badge: {
+                    id: "ciber_embaixador_flamboyant_badge",
+                    name: "Ciber Embaixador Flamboyant",
+                    description: "Domínio excepcional em segurança da informação",
+                    minPercentage: 76,
+                    maxPercentage: 100,
+                    points: 200,
+                    color: "#7F1D1D",
+                    image: "../assets/images/achievements/ciber-embaixador.png",
+                    shortcode: "[gamipress_award_achievement id='ciber_embaixador_flamboyant' user_id='USER_ID' points='200']"
+                }
+            };
+
+            // Questions array and all other game logic would go here...
+            // [Rest of the JavaScript code from the vanilla version]
+            
+            console.log('Escape Room Plugin Game Initialized');
+        }
+    </script>
+</body>
+</html>
